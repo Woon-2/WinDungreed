@@ -29,7 +29,7 @@ public:
 private:
 	struct fmod_service
 	{
-		fmod_service() : default_volume{ 1.0f }, sounds{ fmod_num_sounds }, channels{ fmod_num_channels }
+		fmod_service() : default_volume{ 1.0f }, sound_pool{ fmod_num_sounds }, channel_pool{ fmod_num_channels }
 		{
 			FMOD::System_Create( &system );
 			system->init( fmod_num_channels, FMOD_INIT_NORMAL, nullptr );
@@ -51,8 +51,8 @@ private:
 
 		float default_volume;
 		FMOD::System* system;
-		pool< FMOD::Sound > sounds;
-		pool< FMOD::Channel > channels;
+		pool< FMOD::Sound > sound_pool;
+		pool< FMOD::Channel > channel_pool;
 	};
 
 	static fmod_service fmods;
