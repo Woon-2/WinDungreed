@@ -1,0 +1,6 @@
+﻿  dun.cpp
+C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\keyword.h(5,1): warning C4005: 'PURE': 매크로 재정의
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\combaseapi.h(174): message : 'PURE'의 이전 정의를 참조하십시오.
+C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\keyword.h(11,1): warning C4005: 'INTERFACE': 매크로 재정의
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\commdlg.h(984): message : 'INTERFACE'의 이전 정의를 참조하십시오.
+  dun.vcxproj -> C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\Debug\dun.exe
