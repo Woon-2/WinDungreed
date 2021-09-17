@@ -94,17 +94,17 @@ public:
 			exhausted->~Ty();
 			putmem( reinterpret_cast< byte_ptr >( exhausted ) );
 			exhausted = nullptr;
-			++avl_cnt;
+			++*avl_cnt;
 		}
 	}
 
 	const size_t available_cnt() const noexcept
 	{
-		return avl_cnt;
+		return *avl_cnt;
 	}
 
 	pool( const size_t capacity ) : mem{ new byte[ sizeof( Ty ) * capacity + sizeof( void* ) ] },
-		free_ptr{ mem }, avl_cnt{ capacity }, ref_cnt{ new size_t{1} }
+		free_ptr{ mem }, avl_cnt{ new size_t{ capacity } }, ref_cnt{ new size_t{ 1 } }
 	{
 		// write next memory's address in each memory
 		byte_pptr cur = reinterpret_cast< byte_pptr >( mem );
@@ -143,7 +143,7 @@ public:
 		avl_cnt{ other.avl_cnt }, ref_cnt{ other.ref_cnt }
 	{
 		other.mem = nullptr;		other.free_ptr = nullptr;
-		other.avl_cnt = 0;			other.ref_cnt = nullptr;
+		other.avl_cnt = nullptr;	other.ref_cnt = nullptr;
 	}
 
 	pool& operator=( pool&& other ) noexcept
@@ -154,7 +154,7 @@ public:
 			avl_cnt = other.avl_cnt;	ref_cnt = other.ref_cnt;
 
 			other.mem = nullptr;		other.free_ptr = nullptr;
-			other.avl_cnt = 0;			other.ref_cnt = nullptr;
+			other.avl_cnt = nullptr;	other.ref_cnt = nullptr;
 		}
 		
 		return *this;
@@ -177,7 +177,7 @@ private:
 	{
 		check_avl_cnt();
 		Ptr_t ret{ create_obj( std::forward< Args >( args )... ), dealloc_func{ *this } };
-		--avl_cnt;
+		--*avl_cnt;
 
 		return ret;
 	}
@@ -193,7 +193,7 @@ private:
 
 	void check_avl_cnt()
 	{
-		if ( !avl_cnt )
+		if ( !*avl_cnt )
 		{
 			throw std::bad_alloc{};
 		}
@@ -235,7 +235,7 @@ private:
 
 	byte_ptr mem;
 	byte_ptr free_ptr;
-	size_t avl_cnt;
+	size_t* avl_cnt;
 	size_t* ref_cnt;
 };
 
