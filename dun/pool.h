@@ -167,6 +167,8 @@ public:
 			if ( !--*ref_cnt )
 			{
 				delete[] mem;
+				delete ref_cnt;
+				delete avl_cnt;
 			}
 		}
 	}
