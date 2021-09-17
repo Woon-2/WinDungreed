@@ -30,8 +30,11 @@ public:
 	using byte_ptr = char*;
 	using byte_pptr = char**;
 	using Uptr = std::unique_ptr< Ty, dealloc_func >;
+	using Rptr = Ty*;
+	using Sptr = std::shared_ptr< Ty >;
 
 	// requires constructor args
+	// returns an unique pointer
 	// automatically deallocate
 	template < typename ... Args >
 	Uptr alloc( Args&& ... args )
@@ -49,13 +52,68 @@ public:
 		return ret;
 	}
 
-	// requires array size template args,
-	// requires constructor args, returns array of unique pointer
+	// requires constructor args
+	// returns a shared pointer
+	// automatically deallocate
+	template < typename ... Args >
+	Sptr salloc( Args&& ... args )
+	{
+		if ( !avl_cnt )
+		{
+			throw std::bad_alloc{};
+		}
+
+		Ty* obj_ptr = new( getmem() ) Ty{ std::forward< Args >( args )... };
+		Sptr ret{ obj_ptr, dealloc_func{ *this } };
+
+		--avl_cnt;
+
+		return ret;
+	}
+
+	// requires constructor args
+	// returns a raw pointer
+	// automatically deallocate
+	template < typename ... Args >
+	Rptr ralloc( Args&& ... args )
+	{
+		if ( !avl_cnt )
+		{
+			throw std::bad_alloc{};
+		}
+
+		Ty* obj_ptr = new( getmem() ) Ty{ std::forward< Args >( args )... };
+
+		--avl_cnt;
+
+		return obj_ptr;
+	}
+
+	// requires array size template args, constructor args
+	// returns array of unique pointer
 	// automatically deallocate
 	template < size_t arr_size, typename ... Args >
 	std::array< Uptr, arr_size > alloc( Args&& ... args )
 	{
 		return alloc_array( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
+	}
+
+	// requires array size template args, constructor args
+	// returns array of shared pointer
+	// automatically deallocate
+	template < size_t arr_size, typename ... Args >
+	std::array< Sptr, arr_size > salloc( Args&& ... args )
+	{
+		return salloc_array( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
+	}
+
+	// requires array size template args, constructor args
+	// returns array of raw pointer
+	// automatically deallocate
+	template < size_t arr_size, typename ... Args >
+	std::array< Sptr, arr_size > ralloc( Args&& ... args )
+	{
+		return ralloc_array( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
 	}
 
 	const size_t available_cnt() const noexcept
@@ -143,6 +201,18 @@ private:
 	std::array< Uptr, sizeof...( Idx ) > alloc_array( std::index_sequence< Idx... >, Args&& ... args )
 	{
 		return std::array< Uptr, sizeof...( Idx ) >{ _dummy( alloc( std::forward< Args >( args )... ), Idx )... };
+	}
+
+	template < typename ... Args, size_t ... Idx >
+	std::array< Sptr, sizeof...( Idx ) > salloc_array( std::index_sequence< Idx... >, Args&& ... args )
+	{
+		return std::array< Sptr, sizeof...( Idx ) >{ _dummy( salloc( std::forward< Args >( args )... ), Idx )... };
+	}
+
+	template < typename ... Args, size_t ... Idx >
+	std::array< Rptr, sizeof...( Idx ) > ralloc_array( std::index_sequence< Idx... >, Args&& ... args )
+	{
+		return std::array< Rptr, sizeof...( Idx ) >{ _dummy( ralloc( std::forward< Args >( args )... ), Idx )... };
 	}
 
 	Uptr _dummy( Uptr elem, size_t ) const noexcept
