@@ -101,9 +101,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 				for ( int j = 0; j < 5; ++j )
 				{
-					auto uptr = pl.ralloc( j + 1, j + 2, j + 3 );
+					auto uptr = pl.salloc( j + 1, j + 2, j + 3 );
 					std::cout << uptr->x << ", " << uptr->y << ", " << uptr->z << std::endl;
-					pl.dealloc( uptr );
+					//pl.dealloc( uptr );
 				}
 			}
 
@@ -111,11 +111,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				std::cout << "\n-----------------------------------------\n";
 
-				auto arr = pl.ralloc< 5 >( i + 1, i + 2, i + 3 );
+				auto arr = pl.salloc< 5 >( i + 1, i + 2, i + 3 );
 				for ( auto& iter : arr )
 				{
 					std::cout << iter->x << ", " << iter->y << ", " << iter->z << std::endl;
-					pl.dealloc( iter );
+					//pl.dealloc( iter );
 				}
 
 				std::cout << pl.available_cnt() << std::endl;

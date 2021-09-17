@@ -64,7 +64,7 @@ public:
 	template < size_t arr_size, typename ... Args >
 	std::array< Uptr, arr_size > alloc( Args&& ... args )
 	{
-		return alloc_array( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
+		return alloc_array_impl< Uptr >( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
 	}
 
 	// requires array size template args, constructor args
@@ -73,7 +73,7 @@ public:
 	template < size_t arr_size, typename ... Args >
 	std::array< Sptr, arr_size > salloc( Args&& ... args )
 	{
-		return salloc_array( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
+		return alloc_array_impl< Sptr >( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
 	}
 
 	// requires array size template args, constructor args
@@ -81,7 +81,7 @@ public:
 	template < size_t arr_size, typename ... Args >
 	std::array< Ty*, arr_size > ralloc( Args&& ... args )
 	{
-		return ralloc_array( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
+		return alloc_array_impl< Rptr >( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
 	}
 
 	// requires object's pointer to deallocate
@@ -92,7 +92,7 @@ public:
 		if ( exhausted )
 		{
 			exhausted->~Ty();
-			putmem( reinterpret_cast<byte_ptr>( exhausted ) );
+			putmem( reinterpret_cast< byte_ptr >( exhausted ) );
 			exhausted = nullptr;
 			++avl_cnt;
 		}
@@ -173,13 +173,22 @@ public:
 
 private:
 	template < typename Ptr_t, typename ... Args >
-	Ptr_t alloc_impl( Args ... args )
+	auto alloc_impl( Args ... args )
 	{
 		check_avl_cnt();
 		Ptr_t ret{ create_obj( std::forward< Args >( args )... ), dealloc_func{ *this } };
 		--avl_cnt;
 
 		return ret;
+	}
+
+	template < typename Ptr_t, typename ... Args, size_t ... Idx >
+	auto alloc_array_impl( std::index_sequence< Idx... >, Args&& ... args )
+	{
+		return std::array<
+			std::conditional_t< std::is_same_v< Ptr_t, Rptr >, Ty*, Ptr_t >,
+			sizeof...( Idx )
+		> { _dummy( alloc_impl< Ptr_t >( std::forward< Args >( args )... ), Idx )... };
 	}
 
 	void check_avl_cnt()
@@ -209,24 +218,6 @@ private:
 		free_ptr = mem;
 	}
 
-	template < typename ... Args, size_t ... Idx >
-	std::array< Uptr, sizeof...( Idx ) > alloc_array( std::index_sequence< Idx... >, Args&& ... args )
-	{
-		return std::array< Uptr, sizeof...( Idx ) >{ _dummy( alloc( std::forward< Args >( args )... ), Idx )... };
-	}
-
-	template < typename ... Args, size_t ... Idx >
-	std::array< Sptr, sizeof...( Idx ) > salloc_array( std::index_sequence< Idx... >, Args&& ... args )
-	{
-		return std::array< Sptr, sizeof...( Idx ) >{ _dummy( salloc( std::forward< Args >( args )... ), Idx )... };
-	}
-
-	template < typename ... Args, size_t ... Idx >
-	std::array< Ty*, sizeof...( Idx ) > ralloc_array( std::index_sequence< Idx... >, Args&& ... args )
-	{
-		return std::array< Ty*, sizeof...( Idx ) >{ _dummy( ralloc( std::forward< Args >( args )... ), Idx )... };
-	}
-
 	template < typename Tx >
 	decltype(auto) _dummy( Tx&& elem, size_t ) const noexcept
 	{
@@ -252,8 +243,8 @@ struct test_pool
 {
 	int x, y, z;
 
-	test_pool( int x, int y, int z ) : x{ x }, y{ y }, z{ z } { std::cout << "생성자 호출\n"; }
-	~test_pool() { std::cout << "소멸자 호출\n"; }
+	test_pool( int x, int y, int z ) : x{ x }, y{ y }, z{ z } {}
+	~test_pool() {}
 };
 
 #endif
