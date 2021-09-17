@@ -19,7 +19,7 @@ public:
 
 		void operator()( Ty* exhausted ) noexcept
 		{
-			pl.deallocate( exhausted );
+			pl.dealloc( exhausted );
 		}
 
 	private:
@@ -30,7 +30,6 @@ public:
 	using byte_ptr = char*;
 	using byte_pptr = char**;
 	using Uptr = std::unique_ptr< Ty, dealloc_func >;
-	using Rptr = Ty*;
 	using Sptr = std::shared_ptr< Ty >;
 
 	// requires constructor args
@@ -39,17 +38,7 @@ public:
 	template < typename ... Args >
 	Uptr alloc( Args&& ... args )
 	{
-		if ( !avl_cnt )
-		{
-			throw std::bad_alloc{};
-		}
-
-		Ty* obj_ptr = new( getmem() ) Ty{ std::forward< Args >( args )... };	
-		Uptr ret{ obj_ptr, dealloc_func{ *this } };
-
-		--avl_cnt;
-
-		return ret;
+		return alloc_impl< Uptr >( std::forward< Args >( args )... );
 	}
 
 	// requires constructor args
@@ -58,35 +47,15 @@ public:
 	template < typename ... Args >
 	Sptr salloc( Args&& ... args )
 	{
-		if ( !avl_cnt )
-		{
-			throw std::bad_alloc{};
-		}
-
-		Ty* obj_ptr = new( getmem() ) Ty{ std::forward< Args >( args )... };
-		Sptr ret{ obj_ptr, dealloc_func{ *this } };
-
-		--avl_cnt;
-
-		return ret;
+		return alloc_impl< Sptr >( std::forward< Args >( args )... );
 	}
 
 	// requires constructor args
 	// returns a raw pointer
-	// automatically deallocate
 	template < typename ... Args >
-	Rptr ralloc( Args&& ... args )
+	Ty* ralloc( Args&& ... args )
 	{
-		if ( !avl_cnt )
-		{
-			throw std::bad_alloc{};
-		}
-
-		Ty* obj_ptr = new( getmem() ) Ty{ std::forward< Args >( args )... };
-
-		--avl_cnt;
-
-		return obj_ptr;
+		return alloc_impl< Rptr >( std::forward< Args >( args )... );
 	}
 
 	// requires array size template args, constructor args
@@ -109,11 +78,24 @@ public:
 
 	// requires array size template args, constructor args
 	// returns array of raw pointer
-	// automatically deallocate
 	template < size_t arr_size, typename ... Args >
-	std::array< Sptr, arr_size > ralloc( Args&& ... args )
+	std::array< Ty*, arr_size > ralloc( Args&& ... args )
 	{
 		return ralloc_array( std::make_index_sequence< arr_size >{}, std::forward< Args >( args )... );
+	}
+
+	// requires object's pointer to deallocate
+	// It doesn't do anything if the pointer was already deallocated.
+	// only for raw pointer
+	void dealloc( Ty*& exhausted ) noexcept
+	{
+		if ( exhausted )
+		{
+			exhausted->~Ty();
+			putmem( reinterpret_cast<byte_ptr>( exhausted ) );
+			exhausted = nullptr;
+			++avl_cnt;
+		}
 	}
 
 	const size_t available_cnt() const noexcept
@@ -190,11 +172,41 @@ public:
 	}
 
 private:
-	void deallocate( Ty* exhausted ) noexcept
+	template < typename Ptr_t, typename ... Args >
+	Ptr_t alloc_impl( Args ... args )
 	{
-		putmem( reinterpret_cast< byte_ptr >( exhausted ) );
+		check_avl_cnt();
+		Ptr_t ret{ create_obj( std::forward< Args >( args )... ), dealloc_func{ *this } };
+		--avl_cnt;
 
-		++avl_cnt;
+		return ret;
+	}
+
+	void check_avl_cnt()
+	{
+		if ( !avl_cnt )
+		{
+			throw std::bad_alloc{};
+		}
+	}
+
+	template < typename ... Args >
+	Ty* create_obj( Args ... args )
+	{
+		return new( getmem() ) Ty{ std::forward< Args >( args )... };
+	}
+
+	byte_ptr getmem() noexcept
+	{
+		byte_ptr ret = free_ptr;
+		free_ptr = *reinterpret_cast< byte_pptr >( free_ptr );
+		return ret;
+	}
+
+	void putmem( byte_ptr mem ) noexcept
+	{
+		*reinterpret_cast< byte_pptr >( mem ) = free_ptr;
+		free_ptr = mem;
 	}
 
 	template < typename ... Args, size_t ... Idx >
@@ -210,28 +222,25 @@ private:
 	}
 
 	template < typename ... Args, size_t ... Idx >
-	std::array< Rptr, sizeof...( Idx ) > ralloc_array( std::index_sequence< Idx... >, Args&& ... args )
+	std::array< Ty*, sizeof...( Idx ) > ralloc_array( std::index_sequence< Idx... >, Args&& ... args )
 	{
-		return std::array< Rptr, sizeof...( Idx ) >{ _dummy( ralloc( std::forward< Args >( args )... ), Idx )... };
+		return std::array< Ty*, sizeof...( Idx ) >{ _dummy( ralloc( std::forward< Args >( args )... ), Idx )... };
 	}
 
-	Uptr _dummy( Uptr elem, size_t ) const noexcept
+	template < typename Tx >
+	decltype(auto) _dummy( Tx&& elem, size_t ) const noexcept
 	{
-		return elem;
+		return std::forward< Tx >( elem );
 	}
 
-	byte_ptr getmem() noexcept
+	// for template, raw pointer uselessly require dealloc_func
+	struct Rptr
 	{
-		byte_ptr ret = free_ptr;
-		free_ptr = *reinterpret_cast< byte_pptr >( free_ptr );
-		return ret;
-	}
+		Rptr( Ty* inst, dealloc_func ) : inst{ inst } {}
+		operator Ty*() { return inst; }
 
-	void putmem( byte_ptr mem ) noexcept
-	{
-		*reinterpret_cast< byte_pptr >( mem ) = free_ptr;
-		free_ptr = mem;
-	}
+		Ty* inst;
+	};
 
 	byte_ptr mem;
 	byte_ptr free_ptr;

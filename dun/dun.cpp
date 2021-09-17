@@ -97,28 +97,55 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			for ( int i = 0; i < 5; ++i )
 			{
+				std::cout << "\n-----------------------------------------\n";
+
 				for ( int j = 0; j < 5; ++j )
 				{
-					auto uptr = pl.alloc( j + 1, j + 2, j + 3 );
+					auto uptr = pl.ralloc( j + 1, j + 2, j + 3 );
 					std::cout << uptr->x << ", " << uptr->y << ", " << uptr->z << std::endl;
+					pl.dealloc( uptr );
 				}
-				std::cout << "\n-----------------------------------------\n";
 			}
 
 			for ( int i = 0; i < 5; ++i )
 			{
-				auto arr = pl.alloc< 5 >( i + 1, i + 2, i + 3 );
-				for ( const auto& iter : arr )
+				std::cout << "\n-----------------------------------------\n";
+
+				auto arr = pl.ralloc< 5 >( i + 1, i + 2, i + 3 );
+				for ( auto& iter : arr )
 				{
 					std::cout << iter->x << ", " << iter->y << ", " << iter->z << std::endl;
+					pl.dealloc( iter );
 				}
 
-				std::cout << pl.available_cnt();
-
-				std::cout << "\n-----------------------------------------\n";
+				std::cout << pl.available_cnt() << std::endl;
 			}
 
 			SetTimer( hWnd, 1, timer::ms_per_frame(), NULL );
+			break;
+		}
+
+		case 'M':
+		{
+			pool<test_pool> pl{ 10'000'000 };
+
+			std::cout << "원시 동적 할당 : " << timefunc([]()
+				{
+					for ( int i = 0; i < 10'000'000; ++i )
+					{
+						auto ptr = new test_pool{ 1, 2, 3 };
+						delete ptr;
+					}
+				} ) << " ms 소요\n";
+
+			std::cout << "풀 동적 할당 : " << timefunc( [&pl]()
+				{
+					for ( int i = 0; i < 10'000'000; ++i )
+					{
+						auto ptr = pl.alloc( 1, 2, 3 );
+					}
+				} ) << " ms 소요\n";
+
 			break;
 		}
 
