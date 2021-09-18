@@ -130,6 +130,8 @@ public:
 	{
 		if ( this != &other )
 		{
+			--*ref_cnt;
+
 			mem = other.mem;			free_ptr = other.free_ptr;
 			avl_cnt = other.avl_cnt;	ref_cnt = other.ref_cnt;
 
