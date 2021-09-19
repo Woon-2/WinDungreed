@@ -113,7 +113,7 @@ public:
 
 		for ( size_t i = 0; i < capacity; ++i )
 		{
-			next += sizeof( Ty );
+			next += safe_mem();
 			*cur = next;
 			cur = reinterpret_cast< byte_pptr >( next );
 		}
