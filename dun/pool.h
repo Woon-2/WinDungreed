@@ -5,6 +5,7 @@
 #include <utility>
 #include <array>
 #include <type_traits>
+#include <algorithm>
 
 #include <iostream>
 
@@ -103,7 +104,7 @@ public:
 		return *avl_cnt;
 	}
 
-	pool( const size_t capacity ) : mem{ new byte[ sizeof( Ty ) * capacity + sizeof( void* ) ] },
+	pool( const size_t capacity ) : mem{ new byte[ safe_mem() * capacity + sizeof( void* ) ] },
 		free_ptr{ mem }, avl_cnt{ new size_t{ capacity } }, ref_cnt{ new size_t{ 1 } }
 	{
 		// write next memory's address in each memory
@@ -176,6 +177,12 @@ public:
 	}
 
 private:
+	// for safe memory writing, each memory size must be over sizeof( void* ).
+	static constexpr const size_t safe_mem() noexcept
+	{
+		return std::max( sizeof( Ty ), sizeof( void* ) );
+	}
+
 	template < typename Ptr_t, typename ... Args >
 	auto alloc_impl( Args ... args )
 	{
