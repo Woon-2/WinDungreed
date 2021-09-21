@@ -2,9 +2,9 @@
 #define _TMP
 
 #include <type_traits>
-#include "keyword.h"
 #include <chrono>
 #include <tuple>
+#include <iostream>
 
 // identify if type is in a parameter pack or not
 template < typename Tp, typename... List >
@@ -23,7 +23,7 @@ struct contains< Tp > : std::false_type {};
 
 // everything is private!
 template < typename T >
-class passkey NONCOPYABLE
+class passkey
 {
     friend T;
     passkey() {}
@@ -36,7 +36,7 @@ class passkey NONCOPYABLE
 
 // what keys are allowed
 template < typename... Keys >
-class allow NONCOPYABLE
+class allow
 {
 public:
     template < typename Key >
@@ -50,7 +50,7 @@ public:
 };
 
 template < typename ... Elems, size_t ... Idx >
-HELPER std::istream& istreamget_impl( std::istream& is, std::tuple< Elems... >& tup, const std::index_sequence< Idx... > )
+std::istream& istreamget_impl( std::istream& is, std::tuple< Elems... >& tup, const std::index_sequence< Idx... > )
 {
     int dummy[ sizeof...( Elems ) ] = { ( is >> std::get< Idx >( tup ), 0 )... };
     return is;
@@ -64,7 +64,7 @@ std::istream& operator>>( std::istream& is, std::tuple< Elems... >& tup )
 }
 
 template < typename ... Elems, size_t ... Idx >
-HELPER std::ostream& ostreamput_impl( std::ostream& os, std::tuple< Elems... >& tup, const std::index_sequence< Idx... > )
+std::ostream& ostreamput_impl( std::ostream& os, std::tuple< Elems... >& tup, const std::index_sequence< Idx... > )
 {
     int dummy[ sizeof...( Elems ) ] = { ( os << std::get< Idx >( tup ) << ' ', 0 )... };
     return os;
@@ -85,9 +85,9 @@ auto timefunc( Func func, Args... args )
 
     auto tp = system_clock::now();
     func( args... );
-    
-    return duration_cast<_Countt>( system_clock::now() - tp ).count()
-        / static_cast<long double>( _Countt::period::den / _Timet::period::den );
+
+    return duration_cast< _Countt >( system_clock::now() - tp ).count()
+        / static_cast< long double >( _Countt::period::den / _Timet::period::den );
 }
 
 #endif

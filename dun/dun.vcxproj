@@ -19,9 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dun.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="database.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="keyword.h" />
@@ -33,6 +30,9 @@
     <ClInclude Include="TMP.h" />
     <ClInclude Include="xyutility.h" />
     <ClInclude Include="saveload.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dun.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

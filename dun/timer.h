@@ -1,4 +1,3 @@
-#pragma once
 #ifndef _timer
 #define _timer
 
@@ -8,7 +7,6 @@
 
 #include <chrono>
 #include <iostream>
-#include "keyword.h"
 #include "TMP.h"
 #include <algorithm>
 #include <queue>
@@ -46,8 +44,8 @@ public:
 private:
 	static void go_routines( const int current_lag )
 	{
-		frame_timer::on_timer( current_lag );
 		worldtime_timer::on_timer();
+		frame_timer::on_timer( current_lag );
 	}
 
 
