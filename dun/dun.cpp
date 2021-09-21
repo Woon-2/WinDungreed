@@ -31,7 +31,7 @@ public:
 	}
 	operator HDC() { return buf_dc; }
 
-	_BackBuffer(Singleton::no_constructor_call) {}
+	_BackBuffer( Singleton::no_constructor_call ) : buf_dc{ nullptr } {}
 
 private:
 	HDC buf_dc;
@@ -94,14 +94,14 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 		{
 		case 'T':
 		{
-			timer::setFPS( 100 );
+			timer::setFPS( 60 );
 
-			SetTimer( hWnd, 1, timer::ms_per_frame(), NULL );
+			SetTimer( hWnd, 1, static_cast< size_t >( timer::ms_per_frame() ), NULL );
 
 			for ( int i = 0; i < 1000; ++i )
 			{
-				auto val = random_value( 100, 100'000 );
-				timer::add_request( val, [ val ]() { std::cout << val << " ms 夸没 贸府!\n"; } );
+				auto val = random_value( 100, 100000 );
+				timer::add_request( val, [val]() { std::cout << val << " ms 夸没 贸府!\n"; } );
 			}
 
 			break;

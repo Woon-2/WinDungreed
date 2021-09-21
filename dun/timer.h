@@ -18,51 +18,68 @@
 class timer
 {
 public:
-	static constexpr void setFPS( const int fps ) noexcept { frame_timer::setFPS( fps ); }
-	static constexpr const int ms_per_frame() noexcept { return frame_timer::ms_per_frame(); }
-
-	// after ms_time, wrapped_func will be executed.
-	// wrap your func in a lambda expression.
-	// [ &args... ]() { your_static_func( args... ) }
-	// [ this, &args... ]() { this-> your_class_func( args... ) }
+	// after ms_time, func will be executed.
+	// func sholde be compatible with std::function< void() >
 	template < typename Func >
-	static void add_request( const long long ms_time, Func wrapped_func ) noexcept
+	static void add_request( const double ms_time, Func func ) noexcept
 	{
-		worldtime_timer::add_request( worldtime_timer::request{ ms_time, wrapped_func } );
+		worldtime_timer::add_request( worldtime_timer::request{ ms_time, func } );
 	}
+
+	// every ms_time, func will be executed.
+	// func sholde be compatible with std::function< void() >
+	// Condition should be compatible with std::function< bool() >
+	template < typename Func, typename Condition >
+	static void add_loop_request( const double ms_time, Func func, Condition condition ) noexcept
+	{
+		add_request( ms_time, [ func, condition ]() {
+			if ( condition() )
+			{
+				func();
+				add_loop_request( ms_time, func, condition );
+			} } );
+	}
+
+	static constexpr void setFPS( const int fps ) noexcept { frame_timer::setFPS( fps ); }
+	static constexpr const float ms_per_frame() noexcept { return frame_timer::ms_per_frame(); }
+	static constexpr const int curFPS() noexcept { return static_cast< int >( 1000.0f / ms_per_frame() ); }
 
 	static void on_timer()
 	{
-		static int lag = 0;
-		std::cout << "\n루틴 시작 당시 lag : " << lag << std::endl;
-		auto elapsed = static_cast< int >( timefunc( go_routines, lag ) );
-		lag = std::max( lag + elapsed - ms_per_frame(), 0 );
+		std::cout << "\n현재 FPS : " << curFPS() << std::endl;
+
+		static float lag = 0;
+		std::cout << "루틴 시작 당시 lag : " << lag << std::endl;
+		auto elapsed = static_cast< float >( timefunc( go_routines, lag ) );
+		lag = std::max( lag + elapsed - ms_per_frame(), 0.0f );
 	}
 
 	timer() = delete;
 
 private:
-	static void go_routines( const int current_lag )
+	static void go_routines( const float current_lag )
 	{
-		worldtime_timer::on_timer();
-		frame_timer::on_timer( current_lag );
+		if ( current_lag < ms_per_frame() * 2 )
+		{
+			worldtime_timer::on_timer();
+			frame_timer::on_timer( current_lag );
+		}
 	}
-
 
 	class frame_timer
 	{
 	public:
 		static constexpr void setFPS( const int fps ) noexcept
 		{
-			_ms_per_frame = 1000 / fps;
+			_ms_per_frame = 1000.0f / fps;
 		}
 
-		static constexpr const int ms_per_frame() noexcept
+		static constexpr const float ms_per_frame() noexcept
 		{
 			return _ms_per_frame;
 		}
 
-		static void on_timer( const int current_lag )
+		static void on_timer( const float current_lag )
 		{
 			update();
 			if ( current_lag < ms_per_frame() )
@@ -91,7 +108,7 @@ private:
 			}
 		}
 
-		static int _ms_per_frame;
+		static float _ms_per_frame;
 	};
 
 	class worldtime_timer
@@ -101,34 +118,34 @@ private:
 		{
 		public:
 			template < typename Func >
-			explicit request( const long long ms_time, Func wrapped_func ) :
-				_world_time_expected{ ms_time + world_time }, wrapped_func{ wrapped_func } {}
+			explicit request( const double ms_time, Func func ) :
+				_world_time_expected{ ms_time + world_time }, func{ func } {}
 
 			request() = delete;
 
 			request( const request& other ) : _world_time_expected{ other._world_time_expected },
-				wrapped_func{ other.wrapped_func } {}
+				func{ other.func } {}
 
 			request& operator=( const request& other )
 			{
 				if ( this != &other )
 				{
 					_world_time_expected = other._world_time_expected;
-					wrapped_func = other.wrapped_func;
+					func = other.func;
 				}
 
 				return *this;
 			}
 
 			request( request&& other ) noexcept : _world_time_expected{ other._world_time_expected },
-				wrapped_func{ std::move( other.wrapped_func ) } {}
+				func{ std::move( other.func ) } {}
 
 			request& operator=( request&& other ) noexcept
 			{
 				if ( this != &other )
 				{
 					_world_time_expected = other._world_time_expected;
-					wrapped_func = std::move( other.wrapped_func );
+					func = std::move( other.func );
 				}
 
 				return *this;
@@ -139,24 +156,24 @@ private:
 				return _world_time_expected > other._world_time_expected;
 			}
 
-			const long long world_time_expected() const noexcept
+			const double world_time_expected() const noexcept
 			{
 				return _world_time_expected;
 			}
 
-			void sub( const long long value ) noexcept
+			void sub( const double value ) noexcept
 			{
 				_world_time_expected -= value;
 			}
 
 			void handle() const
 			{
-				wrapped_func();
+				func();
 			}
 
 		private:
-			long long _world_time_expected;
-			std::function< void() > wrapped_func;
+			double _world_time_expected;
+			std::function< void() > func;
 		};
 
 		static void on_timer()
@@ -185,7 +202,8 @@ private:
 			static auto last_time = system_clock::now();
 			auto cur_time = system_clock::now();
 
-			world_time += duration_cast< milliseconds >( cur_time - last_time ).count();
+			world_time += duration_cast< nanoseconds >( cur_time - last_time ).count()
+				/ static_cast< double >( nanoseconds::period::den / milliseconds::period::den );
 			last_time = cur_time;
 		}
 
@@ -198,7 +216,7 @@ private:
 			}
 		}
 
-		static void rearrange_requests( const long long sub_val )
+		static void rearrange_requests( const double sub_val )
 		{
 			decltype( requests ) temp;
 
@@ -214,10 +232,10 @@ private:
 			requests = std::move( temp );
 		}
 
-		static constexpr const long long world_time_limit()
+		static constexpr const double world_time_limit()
 		{
-			constexpr const long long prevent_time = 100'000;			// 100s
-			return std::numeric_limits< long long >::max() - prevent_time;
+			constexpr const double prevent_time = 100'000;			// 100s
+			return std::numeric_limits< double >::max() - prevent_time;
 		}
 
 		static const bool should_handle_a_request()
@@ -236,13 +254,13 @@ private:
 		}
 
 	private:
-		static long long world_time;
+		static double world_time;
 		static std::priority_queue< request, std::deque< request >, std::greater< request > > requests;
 	};
 };
 
-int timer::frame_timer::_ms_per_frame = 1000 / 30;
-long long timer::worldtime_timer::world_time = 0;
+float timer::frame_timer::_ms_per_frame = 1000.0f / 30;
+double timer::worldtime_timer::world_time = 0.0;
 std::priority_queue< timer::worldtime_timer::request,
 	std::deque< timer::worldtime_timer::request >,
 	std::greater< timer::worldtime_timer::request > > timer::worldtime_timer::requests;
