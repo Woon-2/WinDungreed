@@ -92,36 +92,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 		case 'T':
 		{
-			pool<test_pool> pl1{ 20 };
-			auto pl = pl1;
-
-			for ( int i = 0; i < 5; ++i )
-			{
-				std::cout << "\n-----------------------------------------\n";
-
-				for ( int j = 0; j < 5; ++j )
-				{
-					auto uptr = pl.ralloc( j + 1, j + 2, j + 3 );
-					std::cout << uptr->x << ", " << uptr->y << ", " << uptr->z << std::endl;
-					pl.dealloc( uptr );
-				}
-			}
-
-			for ( int i = 0; i < 5; ++i )
-			{
-				std::cout << "\n-----------------------------------------\n";
-
-				auto arr = pl.ralloc< 5 >( i + 1, i + 2, i + 3 );
-				for ( auto& iter : arr )
-				{
-					std::cout << iter->x << ", " << iter->y << ", " << iter->z << std::endl;
-					pl.dealloc( iter );
-				}
-
-				std::cout << pl1.available_cnt() << std::endl;
-			}
-
 			SetTimer( hWnd, 1, timer::ms_per_frame(), NULL );
+
+			for ( int i = 0; i < 1000; ++i )
+			{
+				auto val = random_value( 100, 100'000 );
+				timer::add_request( val, [ val ]() { std::cout << val << " ms 요청 처리!\n"; } );
+			}
+
 			break;
 		}
 
