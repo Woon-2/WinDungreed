@@ -10,7 +10,6 @@
 #include <array>
 #include "pool.h"
 
-
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = L"Window Class Name";
 LPCTSTR lpszWindowName = L"windows program";
@@ -64,11 +63,23 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdP
 
 	ShowWindow( hWnd, nCmdShow );
 	UpdateWindow( hWnd );
-	
-	while ( GetMessage( &Message, 0, 0, 0 ) ) {
-		TranslateMessage( &Message );
-		DispatchMessage( &Message );
+
+	bool run = true;
+	while ( run )
+	{
+
+		while ( PeekMessage( &Message, hWnd, 0, 0, PM_REMOVE ) )
+		{
+			if ( Message.message == WM_QUIT )
+			{
+				run = false;
+			}
+
+			TranslateMessage( &Message );
+			DispatchMessage( &Message );
+		}
 	}
+
 	return Message.wParam;
 }
 
@@ -103,7 +114,6 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 				auto val = random_value( 100, 100000 );
 				timer::add_request( val, [val]() { std::cout << val << " ms 요청 처리!\n"; } );
 			}
-
 			break;
 		}
 
