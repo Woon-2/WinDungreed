@@ -3,17 +3,10 @@ C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\k
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\combaseapi.h(174): message : 'PURE'의 이전 정의를 참조하십시오.
 C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\keyword.h(11,1): warning C4005: 'INTERFACE': 매크로 재정의
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.19041.0\um\commdlg.h(984): message : 'INTERFACE'의 이전 정의를 참조하십시오.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(43,14): error C2228: '.fmod_channels' 왼쪽에는 클래스/구조체/공용 구조체가 있어야 합니다.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(43,14): message : 'sound *' 형식입니다.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(43,14): message : 대신 '->'을(를) 사용하려고 했습니까?
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(59,11): error C2039: 'channels': 'sound::fmod_resource'의 멤버가 아닙니다.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(128): message : 'sound::fmod_resource' 선언을 참조하십시오.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(64,11): error C2039: 'channels': 'sound::fmod_resource'의 멤버가 아닙니다.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(128): message : 'sound::fmod_resource' 선언을 참조하십시오.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(69,11): error C2039: 'channels': 'sound::fmod_resource'의 멤버가 아닙니다.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(128): message : 'sound::fmod_resource' 선언을 참조하십시오.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(74,11): error C2039: 'channels': 'sound::fmod_resource'의 멤버가 아닙니다.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(128): message : 'sound::fmod_resource' 선언을 참조하십시오.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(234,10): error C2039: 'update_sound_system': 'sound'의 멤버가 아닙니다.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(13): message : 'sound' 선언을 참조하십시오.
-C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(234,1): error C3861: 'update_sound_system': 식별자를 찾을 수 없습니다.
+C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\sound.h(108,25): warning C4244: '=': 'double'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+  코드를 생성하고 있습니다.
+  0 of 451 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  코드를 생성했습니다.
+  dun.vcxproj -> C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\Release\dun.exe

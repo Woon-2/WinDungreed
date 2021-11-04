@@ -7,6 +7,7 @@
 #include <list>
 #include "TMP.h"
 #include <cassert>
+#include <cmath>
 
 class sound
 {
@@ -78,7 +79,9 @@ public:
 
 	void stop()
 	{
+		fmod_rc.available_channel_cnt += fmod_channels.size();
 		fmod_channels.clear();
+		min_volume = volume;
 	}
 
 	// 모든 재생 완료된 사운드에 대해 종료 처리를 한다.
@@ -94,9 +97,15 @@ public:
 			for ( auto iter = s->fmod_channels.rbegin(); iter != s->fmod_channels.rend(); ++iter )
 			{
 				bool is_playing = false;
-				if ( !( ( *iter )->isPlaying( &is_playing ) ) )
-				{
+				bool is_paused = false;
+				( *iter )->isPlaying( &is_playing );
+				( *iter )->getPaused( &is_paused );
+
+				if ( !is_playing && !is_paused )
+				{   
+					fmod_rc.available_channel_cnt += std::distance( iter, s->fmod_channels.rend() );
 					s->fmod_channels.erase( s->fmod_channels.begin(), iter.base() );
+					s->min_volume = pow( s->volume, s->fmod_channels.size() - 1 );
 					break;
 				}
 			}
@@ -107,16 +116,17 @@ public:
 		: volume{ volume }, gradient{ gradient }
 	{
 		assert( fmode_rc.available_sound_cnt > 0 );
-		--fmod_rc.available_sound_cnt;
 		fmod_rc.system->createSound( file_path, etoi( mod ) | FMOD_LOWMEM, nullptr, &fmod_sound );
 		sound_insts.push_back( this );
 		at = --sound_insts.end();
+		--fmod_rc.available_sound_cnt;
 	}
 
 	~sound()
 	{
 		fmod_sound->release();
 		sound_insts.erase( at );
+		++fmod_rc.available_sound_cnt;
 	}
 
 
