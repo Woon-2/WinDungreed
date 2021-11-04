@@ -90,4 +90,10 @@ auto timefunc( Func func, Args... args )
         / static_cast< long double >( _Countt::period::den / _Timet::period::den );
 }
 
+template < typename Enum_t >
+constexpr const auto etoi( Enum_t e )
+{
+    return static_cast< int >( e );
+}
+
 #endif

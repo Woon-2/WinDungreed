@@ -9,6 +9,7 @@
 #include "saveload.h"
 #include <array>
 #include "pool.h"
+#include "sound.h"
 
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = L"Window Class Name";
