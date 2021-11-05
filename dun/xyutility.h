@@ -1,6 +1,7 @@
 #pragma once
 #ifndef _xyutility
 #define _xyutility
+
 #include <windows.h>
 
 const auto xytrans( const RECT& destrt, const RECT& srcrt, const POINT& pt )
@@ -115,7 +116,7 @@ private:
 		CENTER = 0x10, WIDTH = 0x20, HEIGHT = 0x40 };
 	BYTE flag;
 
-	HELPER const int implicit_left()
+	const int implicit_left()
 	{
 		if (flag & WIDTH)
 		{
@@ -132,7 +133,7 @@ private:
 		}
 	}
 
-	HELPER const int implicit_top()
+	const int implicit_top()
 	{
 		if (flag & HEIGHT)
 		{
@@ -149,7 +150,7 @@ private:
 		}
 	}
 
-	HELPER const int implicit_right()
+	const int implicit_right()
 	{
 		if (flag & WIDTH)
 		{
@@ -166,7 +167,7 @@ private:
 		}
 	}
 
-	HELPER const int implicit_bottom()
+	const int implicit_bottom()
 	{
 		if (flag & HEIGHT)
 		{

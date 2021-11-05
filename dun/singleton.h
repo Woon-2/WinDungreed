@@ -1,12 +1,12 @@
 #pragma once
 #ifndef _singleton
 #define _singleton
-#include "keyword.h"
-template <typename T>
-class Singleton NONCOPYABLE INTERFACE
+
+template < typename T >
+class Singleton
 {
 public:
-	static auto& getinst() NOASSIGNMENT
+	static auto& getinst()
 	{
 		static T inst = no_constructor_call{};
 		return inst;

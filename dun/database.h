@@ -7,11 +7,10 @@
 #include <sstream>
 #include <tuple>
 #include "TMP.h"
-#include "keyword.h"
 
 namespace _csv
 {
-    HELPER auto csv_read_row( std::istream& in, char delimiter )
+    auto csv_read_row( std::istream& in, char delimiter )
     {
         std::stringstream ss;
         bool inquotes = false;
@@ -128,7 +127,7 @@ namespace _csv
 }
 
 template < typename... TupleElems >
-class database NONCOPYABLE
+class database
 {
 public:
     template < typename Str_t >
@@ -154,13 +153,13 @@ public:
     }
 
     // row begins with 0
-    decltype( auto ) get( const size_t row ) const NOASSIGNMENT
+    decltype( auto ) get( const size_t row ) const
     {
         return impl.at( row );
     }
 
     // row begins with 0
-    decltype( auto ) get( const size_t row ) NOASSIGNMENT
+    decltype( auto ) get( const size_t row )
     {
         return impl.at( row );
     }

@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClInclude Include="database.h" />
     <ClInclude Include="game.h" />
-    <ClInclude Include="keyword.h" />
     <ClInclude Include="pool.h" />
     <ClInclude Include="randomvalue.h" />
     <ClInclude Include="scene.h" />

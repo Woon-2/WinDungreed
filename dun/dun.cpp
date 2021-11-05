@@ -64,6 +64,9 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdP
 	WndClass.hIconSm = LoadIcon( NULL, IDI_APPLICATION );
 	RegisterClassEx( &WndClass );
 
+	RECT rt = { 0, 0, 1280, 800 };
+	AdjustWindowRect( &rt, WS_OVERLAPPEDWINDOW, false );
+
 	hWnd = CreateWindow( lpszClass, lpszWindowName, WS_SYSMENU, 0, 0, 1280, 800, NULL, (HMENU)NULL, hInstance, NULL );
 
 	ShowWindow( hWnd, nCmdShow );
@@ -109,16 +112,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 		break;
 
 	case WM_KEYDOWN:
-		switch ( wParam )
-		{
-		case 'T':
-			break;
-
-		case 'Q':
-			dungreed.reset();
-			SendMessage(hWnd, WM_DESTROY, 0, 0);
-			break;
-		}
+		dungreed->process_input( uMsg, wParam, lParam );
 		break;
 
 	case WM_TIMER:

@@ -36,9 +36,6 @@
     <ClInclude Include="TMP.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="keyword.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="saveload.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>

@@ -72,6 +72,22 @@ public:
 		}
 	}
 
+	void mute()
+	{
+		for ( auto ch : fmod_channels )
+		{
+			ch->setMute( true );
+		}
+	}
+
+	void listen()
+	{
+		for ( auto ch : fmod_channels )
+		{
+			ch->setMute( false );
+		}
+	}
+
 	void pause()
 	{
 		for ( auto ch : fmod_channels )
@@ -168,6 +184,22 @@ public:
 		}
 	}
 
+	static void tag_mute( sound_tag tag )
+	{
+		for ( auto s : tagged_sounds[ etoi( tag ) ] )
+		{
+			s->mute();
+		}
+	}
+
+	static void tag_listen( sound_tag tag )
+	{
+		for ( auto s : tagged_sounds[ etoi( tag ) ] )
+		{
+			s->mute();
+		}
+	}
+
 	static void tag_pause( sound_tag tag )
 	{
 		for ( auto s : tagged_sounds[ etoi( tag ) ] )
@@ -205,7 +237,7 @@ public:
 		}
 	}
 
-	friend auto make_sound( const char* file_path, mode mod, const float volume = 1.0f, const float gradient = sound::default_gradient )
+	static auto make( const char* file_path, mode mod, const float volume = 1.0f, const float gradient = sound::default_gradient )
 	{
 		return std::shared_ptr< sound >{ new sound{ file_path, mod, volume, gradient } };
 	}
@@ -264,8 +296,8 @@ using sound_ptr = std::shared_ptr< sound >;
 
 FMOD::System* sound::system;
 std::list< sound* > sound::sound_insts;
-size_t sound::available_sound_cnt;
-size_t sound::available_channel_cnt;
+size_t sound::available_sound_cnt = sound::fmod_max_sounds;
+size_t sound::available_channel_cnt = sound::fmod_max_channels;
 sound::_auto_system sound::_s;
 std::array< std::vector< std::shared_ptr< sound > >, etoi( sound::sound_tag::SIZE ) > sound::tagged_sounds;
 

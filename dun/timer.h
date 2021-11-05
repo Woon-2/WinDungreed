@@ -17,7 +17,7 @@
 
 class timer
 {
-public:
+private:
 	struct delayed
 	{
 		const bool operator>( const delayed& other )
@@ -30,12 +30,12 @@ public:
 	};
 
 public:
-	const float clock;
+	float clock;
 	const UINT timer_id;
 
-	void alarm( delayed&& a )
+	void alarm( float ms_delay, std::function< void() >&& to_do )
 	{
-		alarms.push( a );
+		alarms.push( delayed{ ms_delay, to_do } );
 	}
 
 	void setFPS( const float fps )

@@ -3,11 +3,10 @@
 #define _saveload
 
 #include <fstream>
-#include "keyword.h"
 #include <string>
 #include "database.h"
 
-class saveLoad NONCREATABLE
+class saveLoad
 {
 public:
 
@@ -86,7 +85,7 @@ public:
 
 private:
 	template < typename Str_t, typename SV >
-	HELPER static void save_bin_impl( Str_t&& file_path, SV&& data )
+	static void save_bin_impl( Str_t&& file_path, SV&& data )
 	{
 		std::ofstream out{ file_path, std::ios_base::binary | std::ios_base::out };
 
@@ -97,7 +96,7 @@ private:
 	}
 
 	template < typename Str_t, typename SV >
-	HELPER static void load_bin_impl( Str_t&& file_path, SV&& data )
+	static void load_bin_impl( Str_t&& file_path, SV&& data )
 	{
 		std::ifstream in{ file_path, std::ios_base::binary | std::ios_base::in };
 

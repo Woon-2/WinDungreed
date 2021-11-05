@@ -4,7 +4,6 @@
 #include <random>
 #include <vector>
 #include <array>
-#include "keyword.h"
 
 namespace _rv
 {
@@ -12,12 +11,12 @@ namespace _rv
 	std::default_random_engine dre( rd() );
 }
 
-const auto random_value( const std::uniform_int_distribution<>& uid ) PURE
+const auto random_value( const std::uniform_int_distribution<>& uid )
 {
 	return uid( _rv::dre );
 }
 
-const auto random_value( const int lower_bound, const int upper_bound ) PURE
+const auto random_value( const int lower_bound, const int upper_bound )
 {
 	return random_value( std::uniform_int_distribution<>{lower_bound, upper_bound} );
 }
@@ -55,12 +54,12 @@ auto random_value_array( const int lower_bound, const int upper_bound )
 	return random_value_array< N >( std::uniform_int_distribution<>{lower_bound, upper_bound} );
 }
 
-const auto random_value( const std::uniform_real_distribution<>& urd ) PURE
+const auto random_value( const std::uniform_real_distribution<>& urd )
 {
 	return urd( _rv::dre );
 }
 
-const auto random_value( const double lower_bound, const double upper_bound ) PURE
+const auto random_value( const double lower_bound, const double upper_bound )
 {
 	return random_value( std::uniform_real_distribution<>{lower_bound, upper_bound} );
 }
