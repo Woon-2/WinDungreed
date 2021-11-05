@@ -18,245 +18,149 @@
 class timer
 {
 public:
-	// after ms_time, func will be executed.
-	// func sholde be compatible with std::function< void() >
-	template < typename Func >
-	static void add_request( const double ms_time, Func func ) noexcept
+	struct delayed
 	{
-		worldtime_timer::add_request( worldtime_timer::request{ ms_time, func } );
+		const bool operator>( const delayed& other )
+		{
+			return ms_delay > other.ms_delay;
+		}
+
+		float ms_delay;
+		std::function< void() > to_do;
+	};
+
+public:
+	const float clock;
+	const UINT timer_id;
+
+	void alarm( delayed&& a )
+	{
+		alarms.push( a );
 	}
 
-	// every ms_time, func will be executed.
-	// func sholde be compatible with std::function< void() >
-	// Condition should be compatible with std::function< bool() >
-	template < typename Func, typename Condition >
-	static void add_loop_request( const double ms_time, Func func, Condition condition ) noexcept
+	void setFPS( const float fps )
 	{
-		add_request( ms_time, [ func, condition ]() {
-			if ( condition() )
-			{
-				func();
-				add_loop_request( ms_time, func, condition );
-			} } );
+		objfps = fps;
+		curfps = fps;
+		ms_per_frame = 1000 / fps;
+		KillTimer( hWnd, timer_id );
+		SetTimer( hWnd, timer_id, static_cast< UINT >( ms_per_frame ), nullptr );
 	}
 
-	static constexpr void setFPS( const int fps ) noexcept { frame_timer::setFPS( fps ); }
-	static constexpr const float ms_per_frame() noexcept { return frame_timer::ms_per_frame(); }
-	static constexpr const int curFPS() noexcept { return static_cast< int >( 1000.0f / ms_per_frame() ); }
-
-	static void on_timer()
+	void update()
 	{
-		static float lag = 0;
-		auto elapsed = static_cast< float >( timefunc( go_routines, lag ) );
-		lag = std::max( lag + elapsed - ms_per_frame(), 0.0f );
+		using namespace std::chrono;
+		static system_clock::time_point last_tp = system_clock::now();
+		auto cur_tp = system_clock::now();
+
+		auto interval = duration_cast< nanoseconds >( cur_tp - last_tp ).count()
+			/ static_cast< float >( nanoseconds::period::den / milliseconds::period::den );
+
+		prevent_overflow();
+		process_alarm();
+		update_curfps( interval );
+
+		ms_time += interval;
+		lag = std::max( lag + interval - ms_time, 0.f );
+
+		last_tp = cur_tp;
 	}
 
-	timer() = delete;
+	const float getlag() const
+	{
+		return lag;
+	}
+
+	const float getobjFPS() const 
+	{
+		return objfps;
+	}
+
+	const float getcurFPS() const
+	{
+		return curfps;
+	}
+
+	const float get_ms_per_frame() const
+	{
+		return ms_per_frame;
+	}
+
+	timer( HWND hWnd, const UINT timer_id, const float fps, const float clock = 10.f ) : ms_time{ 0 }, lag{ 0 },
+		hWnd{ hWnd }, timer_id{ timer_id }, clock{ clock }, objfps{ fps }, curfps{ fps }, ms_per_frame{ 1000 / fps }
+	{
+		SetTimer( hWnd, timer_id, static_cast< UINT >( ms_per_frame ), nullptr );
+	}
+
+	~timer()
+	{
+		KillTimer( hWnd, timer_id );
+	}
+
+	// 복사는 이용되지 않을 것이라 가정해 구현하지 않았다.
+	// timer는 id 정보를 들고 있으므로, 후에 구현한다면 독립된 id를 보장하는 복사 동작이 필요하다.
+
+	timer( const timer& other ) = default;
+
+	timer& operator=( const timer& ) = default;
 
 private:
-	static void go_routines( const float current_lag )
+	float lag;
+	float ms_per_frame;
+	float curfps;
+	float objfps;
+	float ms_time;
+	std::priority_queue< delayed, std::vector< delayed >, std::greater<> > alarms;
+	HWND hWnd;
+
+	void prevent_overflow()
 	{
-		if ( current_lag < ms_per_frame() * 2 )
+		static constexpr float limit = 10'000'000.f;
+		if ( ms_time > limit )
 		{
-			worldtime_timer::on_timer();
-			frame_timer::on_timer( current_lag );
+			ms_time -= limit;
+			sub_delays( limit );
 		}
 	}
 
-	class frame_timer
+	void sub_delays( const float val )
 	{
-	public:
-		static constexpr void setFPS( const int fps ) noexcept
+		decltype( alarms ) temp;
+
+		while ( !alarms.empty() )
 		{
-			_ms_per_frame = 1000.0f / fps;
+			auto a = alarms.top();
+			a.ms_delay -= val;
+
+			temp.push( std::move( a ) );
+			alarms.pop();
 		}
 
-		static constexpr const float ms_per_frame() noexcept
-		{
-			return _ms_per_frame;
-		}
+		alarms = std::move( temp );
+	}
 
-		static void on_timer( const float current_lag )
-		{
-			update();
-			if ( current_lag < ms_per_frame() )
-			{
-				render();
-			}
-		}
-
-	private:
-
-		static void update()
-		{
-			std::cout << "업데이트 루틴!\n";
-			for ( int i = 0; i < 20000000; ++i )
-			{
-				i += 2;
-			}
-		}
-
-		static void render()
-		{
-			std::cout << "렌더 루틴!\n";
-			for ( int i = 0; i < 40000000; ++i )
-			{
-				i += 2;
-			}
-		}
-
-		static float _ms_per_frame;
-	};
-
-	class worldtime_timer
+	void process_alarm()
 	{
-	public:
-		class request
+		while ( is_there_an_alarm_on_time() )
 		{
-		public:
-			template < typename Func >
-			explicit request( const double ms_time, Func func ) :
-				_world_time_expected{ ms_time + world_time }, func{ func } {}
-
-			request() = delete;
-
-			request( const request& other ) : _world_time_expected{ other._world_time_expected },
-				func{ other.func } {}
-
-			request& operator=( const request& other )
-			{
-				if ( this != &other )
-				{
-					_world_time_expected = other._world_time_expected;
-					func = other.func;
-				}
-
-				return *this;
-			}
-
-			request( request&& other ) noexcept : _world_time_expected{ other._world_time_expected },
-				func{ std::move( other.func ) } {}
-
-			request& operator=( request&& other ) noexcept
-			{
-				if ( this != &other )
-				{
-					_world_time_expected = other._world_time_expected;
-					func = std::move( other.func );
-				}
-
-				return *this;
-			}
-
-			const bool operator>( const request& other ) const noexcept
-			{
-				return _world_time_expected > other._world_time_expected;
-			}
-
-			const double world_time_expected() const noexcept
-			{
-				return _world_time_expected;
-			}
-
-			void sub( const double value ) noexcept
-			{
-				_world_time_expected -= value;
-			}
-
-			void handle() const
-			{
-				func();
-			}
-
-		private:
-			double _world_time_expected;
-			std::function< void() > func;
-		};
-
-		static void on_timer()
-		{
-			update_world_time();
-			prevent_world_time_overflow();
-
-			while ( should_handle_a_request() )
-			{
-				handle_a_request();
-			}
+			alarms.top().to_do();
+			alarms.pop();
 		}
+	}
 
-		static void add_request( request&& req )
+	const bool is_there_an_alarm_on_time()
+	{
+		if ( alarms.empty() )
 		{
-			requests.push( req );
+			return false;
 		}
+		return alarms.top().ms_delay < ms_time;
+	}
 
-	private:
-		static void update_world_time()
-		{
-			using namespace std::chrono;
-			static auto last_time = system_clock::now();
-			auto cur_time = system_clock::now();
-
-			world_time += duration_cast< nanoseconds >( cur_time - last_time ).count()
-				/ static_cast< double >( nanoseconds::period::den / milliseconds::period::den );
-			last_time = cur_time;
-		}
-
-		static void prevent_world_time_overflow()
-		{
-			if ( world_time > world_time_limit() )
-			{
-				world_time -= world_time_limit();
-				rearrange_requests( world_time_limit() );
-			}
-		}
-
-		static void rearrange_requests( const double sub_val )
-		{
-			decltype( requests ) temp;
-
-			while ( !requests.empty() )
-			{
-				auto req = requests.top();
-				req.sub( sub_val );
-
-				temp.push( std::move( req ) );
-				requests.pop();
-			}
-
-			requests = std::move( temp );
-		}
-
-		static constexpr const double world_time_limit()
-		{
-			constexpr const double prevent_time = 10'000'000;
-			return std::numeric_limits< double >::max() - prevent_time;
-		}
-
-		static const bool should_handle_a_request()
-		{
-			if ( requests.empty() )
-			{
-				return false;
-			}
-			return requests.top().world_time_expected() < world_time;
-		}
-
-		static void handle_a_request()
-		{
-			requests.top().handle();
-			requests.pop();
-		}
-
-	private:
-		static double world_time;
-		static std::priority_queue< request, std::deque< request >, std::greater< request > > requests;
-	};
+	void update_curfps( const float interval )
+	{
+		curfps = 1000 / interval;
+	}
 };
-
-float timer::frame_timer::_ms_per_frame = 1000.0f / 30;
-double timer::worldtime_timer::world_time = 0.0;
-std::priority_queue< timer::worldtime_timer::request,
-	std::deque< timer::worldtime_timer::request >,
-	std::greater< timer::worldtime_timer::request > > timer::worldtime_timer::requests;
 
 #endif

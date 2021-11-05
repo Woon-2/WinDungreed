@@ -10,6 +10,10 @@
 #include <array>
 #include "pool.h"
 #include "sound.h"
+#include "timer.h"
+#include "game.h"
+
+std::unique_ptr< game > dungreed;
 
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = L"Window Class Name";
@@ -65,10 +69,13 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdP
 	ShowWindow( hWnd, nCmdShow );
 	UpdateWindow( hWnd );
 
+	// ------------------------------------------------------------------------
+
+	dungreed = std::make_unique< game >( hWnd, 0, 60 );
+
 	bool run = true;
 	while ( run )
 	{
-
 		while ( PeekMessage( &Message, hWnd, 0, 0, PM_REMOVE ) )
 		{
 			if ( Message.message == WM_QUIT )
@@ -105,57 +112,17 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 		switch ( wParam )
 		{
 		case 'T':
-		{
-			static soundcomponent s;
-			s.push( soundcomponent::sound_tag::BGM, sound( "sounds/BGM/Shop.wav", sound::mode::loop ) );
-			s.play( soundcomponent::sound_tag::BGM );
-			//static auto c = sound( "sounds/BGM/Shop.wav", sound::mode::loop );
-			//c.play();
-			timer::setFPS( 60 );
-
-			SetTimer( hWnd, 1, static_cast< size_t >( timer::ms_per_frame() ), NULL );
-
-			for ( int i = 0; i < 1000; ++i )
-			{
-				auto val = random_value( 100, 100000 );
-				timer::add_request( val, []() { s.update(); } );
-			}
 			break;
-		}
-
-		case 'M':
-		{
-			pool< test_pool > pl{ 10'000'000 };
-
-			std::cout << "원시 동적 할당 : " << timefunc([]()
-				{
-					for ( int i = 0; i < 10'000'000; ++i )
-					{
-						auto ptr = new test_pool{ 1, 2, 3 };
-						delete ptr;
-					}
-				} ) << " ms 소요\n";
-
-			std::cout << "풀 동적 할당 : " << timefunc( [ &pl ]()
-				{
-					for ( int i = 0; i < 10'000'000; ++i )
-					{
-						auto ptr = pl.alloc( 1, 2, 3 );
-					}
-				} ) << " ms 소요\n";
-
-			break;
-		}
 
 		case 'Q':
-			KillTimer(hWnd, 1);
+			dungreed.reset();
 			SendMessage(hWnd, WM_DESTROY, 0, 0);
 			break;
 		}
 		break;
 
 	case WM_TIMER:
-		timer::on_timer();
+		dungreed->on_wtimer( wParam );
 		break;
 
 	case WM_DESTROY:

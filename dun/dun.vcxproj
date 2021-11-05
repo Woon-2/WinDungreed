@@ -24,6 +24,7 @@
     <ClInclude Include="keyword.h" />
     <ClInclude Include="pool.h" />
     <ClInclude Include="randomvalue.h" />
+    <ClInclude Include="scene.h" />
     <ClInclude Include="singleton.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="timer.h" />

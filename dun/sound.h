@@ -11,42 +11,19 @@
 
 class sound
 {
-private:
-	struct fmod_resource
-	{
-		static constexpr size_t fmod_max_channels = 32;
-		static constexpr size_t fmod_max_sounds = 100;
-
-		FMOD::System* system;
-		size_t available_sound_cnt;
-		size_t available_channel_cnt;
-
-		fmod_resource() : available_channel_cnt{ fmod_max_channels }, available_sound_cnt{ fmod_max_sounds }
-		{
-			FMOD::System_Create( &system );
-			FMOD::Memory_Initialize( malloc( 4 * 1024 * 1024 ), 4 * 1024 * 1024, 0, 0, 0 );
-			system->init( fmod_max_channels, FMOD_INIT_NORMAL, nullptr );
-		}
-
-		~fmod_resource()
-		{
-			system->release();
-		}
-
-		fmod_resource( const fmod_resource& other ) = delete;
-		fmod_resource& operator=( const fmod_resource& other ) = delete;
-	};
-
-	static fmod_resource fmod_rc;
-
 public:
 	enum class mode {
 		normal = FMOD_LOOP_OFF, loop = FMOD_LOOP_NORMAL
 	};
 
+	enum class sound_tag {
+		BGM = 0, SE,
+		SIZE
+	};
+
 	void play()
 	{
-		if ( !( fmod_rc.available_channel_cnt ) )
+		if ( !( available_channel_cnt ) )
 		{
 			// 모든 채널을 사용중일 경우
 			// 가장 작은 볼륨으로 재생되는 채널을 선점한다.
@@ -64,7 +41,7 @@ public:
 
 			min_sound->fmod_channels.pop_back();
 			min_sound->min_volume /= min_sound->gradient;
-			++fmod_rc.available_channel_cnt;
+			++available_channel_cnt;
 		}
 
 		fmod_channels.emplace_back( nullptr );
@@ -73,8 +50,8 @@ public:
 		// 나중에 재생된 사운드의 볼륨을 줄인다.
 		min_volume *= gradient;
 		fmod_channels.back()->setVolume( min_volume );
-		fmod_rc.system->playSound( fmod_sound, nullptr, false, &fmod_channels.back() );
-		--fmod_rc.available_channel_cnt;
+		system->playSound( fmod_sound, nullptr, false, &fmod_channels.back() );
+		--available_channel_cnt;
 
 		std::cout << "volume: " << volume << '\n';
 		std::cout << "min_volume: " << min_volume << '\n';
@@ -113,7 +90,7 @@ public:
 
 	void stop()
 	{
-		fmod_rc.available_channel_cnt += fmod_channels.size();
+		available_channel_cnt += fmod_channels.size();
 		fmod_channels.clear();
 		min_volume = volume;
 	}
@@ -122,7 +99,7 @@ public:
 	// 일정 시간 간격으로 단 한 번 호출한다. ( 사운드마다 호출하지 않는다. 정적 함수이다. )
 	static void update()
 	{
-		fmod_rc.system->update();
+		system->update();
 
 		for ( auto s : sound_insts )
 		{
@@ -137,79 +114,86 @@ public:
 
 				if ( !is_playing && !is_paused )
 				{   
-					fmod_rc.available_channel_cnt += std::distance( iter, s->fmod_channels.rend() );
+					available_channel_cnt += std::distance( iter, s->fmod_channels.rend() );
 					s->fmod_channels.erase( s->fmod_channels.begin(), iter.base() );
-					s->min_volume = pow( s->volume, s->fmod_channels.size() - 1 );
+					s->min_volume = static_cast< float >( pow( s->volume, s->fmod_channels.size() - 1 ) );
 					break;
 				}
 			}
 		}
 	}
 
-	sound( const char* file_path, mode mod, const float volume = 1.0f, const float gradient = default_gradient )
-		: volume{ volume }, gradient{ gradient }, min_volume{ volume / gradient }
+	// 특정 태그의 사운드를 지정한 개수만큼 예약한다.
+	static void tag_reserve( sound_tag tag, const size_t cnt )
 	{
-		assert( fmod_rc.available_sound_cnt > 0 );
-		fmod_rc.system->createSound( file_path, etoi( mod ) | FMOD_LOWMEM, nullptr, &fmod_sound );
-		sound_insts.push_back( this );
-		at = --sound_insts.end();
-		--fmod_rc.available_sound_cnt;
+		tagged_sounds[ etoi( tag ) ].reserve( cnt );
 	}
 
-	// copy는 권장하지 않는다. move samentics를 이용하라.
-	sound( const sound& other ) : volume{ other.volume }, gradient{ other.gradient }, min_volume{ other.volume / other.min_volume },
-		fmod_sound{ other.fmod_sound }
+	static void tag_push( sound_tag tag, const std::shared_ptr< sound >& s )
 	{
-		sound_insts.push_back( this );
-		at = --sound_insts.end();
+		tagged_sounds[ etoi( tag ) ].push_back( s );
 	}
 
-	// copy는 권장하지 않는다. move samentics를 이용하라.
-	sound& operator=( const sound& other )
+	static void tag_push( sound_tag tag, std::shared_ptr< sound >&& s )
 	{
-		if ( this != &other && fmod_sound != other.fmod_sound )
+		tagged_sounds[ etoi( tag ) ].push_back( std::move( s ) );
+	}
+
+	static void clear()
+	{
+		for ( auto& tagged_sound_set : tagged_sounds )
 		{
-			this->~sound();
-
-			volume = other.volume;
-			gradient = other.gradient;
-			min_volume = other.min_volume;
-			fmod_sound = other.fmod_sound;
-
-			sound_insts.push_back( this );
-			at = --sound_insts.end();
+			tagged_sound_set.clear();
 		}
-
-		return *this;
 	}
 
-	sound( sound&& other ) noexcept : volume{ other.volume }, gradient{ other.gradient }, min_volume{ other.min_volume },
-		fmod_sound{ other.fmod_sound }, fmod_channels{ std::move( other.fmod_channels ) }
+	static void tag_clear( sound_tag tag )
 	{
-		other.fmod_sound = nullptr;
-		sound_insts.erase( other.at );
-		sound_insts.push_back( this );
-		at = --sound_insts.end();
+		tagged_sounds[ etoi( tag ) ].clear();
 	}
 
-	sound& operator=( sound&& other ) noexcept
+	static void tag_play( sound_tag tag )
 	{
-		if ( this != &other )
+		for ( auto s : tagged_sounds[ etoi( tag ) ] )
 		{
-			this->~sound();
-
-			volume = other.volume;			gradient = other.gradient;
-			min_volume = other.min_volume;	fmod_sound = other.fmod_sound;
-			fmod_channels = std::move( other.fmod_channels );
-
-			other.fmod_sound = nullptr;
-			sound_insts.erase( other.at );
-			sound_insts.push_back( this );
-			at = --sound_insts.end();
+			s->play();
 		}
-
-		return *this;
 	}
+
+	static void tag_amplify( sound_tag tag, const float val )
+	{
+		for ( auto s : tagged_sounds[ etoi( tag ) ] )
+		{
+			s->amplify( val );
+		}
+	}
+
+	static void tag_pause( sound_tag tag )
+	{
+		for ( auto s : tagged_sounds[ etoi( tag ) ] )
+		{
+			s->pause();
+		}
+	}
+
+	static void tag_resume( sound_tag tag )
+	{
+		for ( auto s : tagged_sounds[ etoi( tag ) ] )
+		{
+			s->resume();
+		}
+	}
+
+	static void tag_stop( sound_tag tag )
+	{
+		for ( auto s : tagged_sounds[ etoi( tag ) ] )
+		{
+			s->stop();
+		}
+	}
+
+	sound( const sound& other ) = delete;
+	sound& operator=( const sound& other ) = delete;
 
 	~sound()
 	{
@@ -217,111 +201,72 @@ public:
 		{
 			fmod_sound->release();
 			sound_insts.erase( at );
-			++fmod_rc.available_sound_cnt;
+			++available_sound_cnt;
 		}
 	}
 
+	friend auto make_sound( const char* file_path, mode mod, const float volume = 1.0f, const float gradient = sound::default_gradient )
+	{
+		return std::shared_ptr< sound >{ new sound{ file_path, mod, volume, gradient } };
+	}
 
 private:
 	static constexpr float default_gradient = 0.5f;
+	static size_t available_sound_cnt;
+	static size_t available_channel_cnt;
+	static constexpr size_t fmod_max_channels = 32;
+	static constexpr size_t fmod_max_sounds = 100;
+	static std::list< sound* > sound_insts;
+	static FMOD::System* system;
+	static std::array< std::vector< std::shared_ptr< sound > >, etoi( sound_tag::SIZE ) > tagged_sounds;
 
 	float min_volume;
 	float volume;
 	float gradient;
 	FMOD::Sound* fmod_sound;
 	std::vector< FMOD::Channel* > fmod_channels;
-	static std::list< sound* > sound_insts;
 	std::list< sound* >::const_iterator at;
-};
 
-sound::fmod_resource sound::fmod_rc;
-std::list< sound* > sound::sound_insts;
+	sound( const char* file_path, mode mod, const float volume = 1.0f, const float gradient = default_gradient )
+		: volume{ volume }, gradient{ gradient }, min_volume{ volume / gradient }, fmod_sound{ nullptr }
+	{
+		if ( !available_sound_cnt )
+		{
+			std::cerr << "available_sound_cnt was 0.\n";
+			return;
+		}
 
-// 사운드를 태그별로 관리하는 클래스
-class soundcomponent
-{
-public:
-	enum class sound_tag {
-		BGM = 0, SE,
-		SIZE
+		system->createSound( file_path, etoi( mod ) | FMOD_LOWMEM, nullptr, &fmod_sound );
+		sound_insts.push_back( this );
+		at = --sound_insts.end();
+		--available_sound_cnt;
+	}
+
+	struct _auto_system
+	{
+		_auto_system()
+		{
+			FMOD::System_Create( &system );
+			FMOD::Memory_Initialize( malloc( 4 * 1024 * 1024 ), 4 * 1024 * 1024, 0, 0, 0 );
+			system->init( fmod_max_channels, FMOD_INIT_NORMAL, nullptr );
+		}
+
+		~_auto_system()
+		{
+			system->release();
+		}
 	};
 
-	// 특정 태그의 사운드를 지정한 개수만큼 예약한다.
-	void reserve( sound_tag tag, const size_t cnt )
-	{
-		sounds[ etoi( tag ) ].reserve( cnt );
-	}
-
-	void push( sound_tag tag, const sound& s )
-	{
-		sounds[ etoi( tag ) ].push_back( s );
-	}
-
-	void push( sound_tag tag, sound&& s )
-	{
-		sounds[ etoi( tag ) ].push_back( std::move( s ) );
-	}
-
-	void clear()
-	{
-		for ( auto& tagged_sound_set : sounds )
-		{
-			tagged_sound_set.clear();
-		}
-	}
-
-	void clear( sound_tag tag )
-	{
-		sounds[ etoi( tag ) ].clear();
-	}
-
-	void play( sound_tag tag )
-	{
-		for ( auto& s : sounds[ etoi( tag ) ] )
-		{
-			s.play();
-		}
-	}
-
-	void amplify( sound_tag tag, const float val )
-	{
-		for ( auto& s : sounds[ etoi( tag ) ] )
-		{
-			s.amplify( val );
-		}
-	}
-
-	void pause( sound_tag tag )
-	{
-		for ( auto& s : sounds[ etoi( tag ) ] )
-		{
-			s.pause();
-		}
-	}
-
-	void resume( sound_tag tag )
-	{
-		for ( auto& s : sounds[ etoi( tag ) ] )
-		{
-			s.resume();
-		}
-	}
-
-	void stop( sound_tag tag )
-	{
-		for ( auto& s : sounds[ etoi( tag ) ] )
-		{
-			s.stop();
-		}
-	}
-
-	void update()
-	{
-		sound::update();
-	}
-
-private:
-	std::array< std::vector< sound >, etoi( sound_tag::SIZE ) > sounds;
+	static _auto_system _s;
 };
+
+using sound_ptr = std::shared_ptr< sound >;
+
+FMOD::System* sound::system;
+std::list< sound* > sound::sound_insts;
+size_t sound::available_sound_cnt;
+size_t sound::available_channel_cnt;
+sound::_auto_system sound::_s;
+std::array< std::vector< std::shared_ptr< sound > >, etoi( sound::sound_tag::SIZE ) > sound::tagged_sounds;
 
 #endif
