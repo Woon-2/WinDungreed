@@ -89,7 +89,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\inc</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\lib\x86</LibraryPath>
+    <LibraryPath>C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\lib\x86;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86)C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\lib\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -99,7 +99,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\inc</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\lib\x86</LibraryPath>
+    <LibraryPath>C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\lib\x86;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\fmod\lib\x86</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

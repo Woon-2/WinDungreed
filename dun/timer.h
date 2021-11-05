@@ -46,10 +46,7 @@ public:
 
 	static void on_timer()
 	{
-		std::cout << "\n현재 FPS : " << curFPS() << std::endl;
-
 		static float lag = 0;
-		std::cout << "루틴 시작 당시 lag : " << lag << std::endl;
 		auto elapsed = static_cast< float >( timefunc( go_routines, lag ) );
 		lag = std::max( lag + elapsed - ms_per_frame(), 0.0f );
 	}
@@ -185,9 +182,6 @@ private:
 			{
 				handle_a_request();
 			}
-
-			std::cout << "worldtime : " << world_time << std::endl;
-			std::cout << "남은 요청 수 : " << requests.size() << std::endl;
 		}
 
 		static void add_request( request&& req )
@@ -234,7 +228,7 @@ private:
 
 		static constexpr const double world_time_limit()
 		{
-			constexpr const double prevent_time = 100'000;			// 100s
+			constexpr const double prevent_time = 10'000'000;
 			return std::numeric_limits< double >::max() - prevent_time;
 		}
 

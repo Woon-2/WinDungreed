@@ -106,6 +106,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 		{
 		case 'T':
 		{
+			static soundcomponent s;
+			s.push( soundcomponent::sound_tag::BGM, sound( "sounds/BGM/Shop.wav", sound::mode::loop ) );
+			s.play( soundcomponent::sound_tag::BGM );
+			//static auto c = sound( "sounds/BGM/Shop.wav", sound::mode::loop );
+			//c.play();
 			timer::setFPS( 60 );
 
 			SetTimer( hWnd, 1, static_cast< size_t >( timer::ms_per_frame() ), NULL );
@@ -113,7 +118,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 			for ( int i = 0; i < 1000; ++i )
 			{
 				auto val = random_value( 100, 100000 );
-				timer::add_request( val, [val]() { std::cout << val << " ms 요청 처리!\n"; } );
+				timer::add_request( val, []() { s.update(); } );
 			}
 			break;
 		}

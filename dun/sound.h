@@ -11,6 +11,34 @@
 
 class sound
 {
+private:
+	struct fmod_resource
+	{
+		static constexpr size_t fmod_max_channels = 32;
+		static constexpr size_t fmod_max_sounds = 100;
+
+		FMOD::System* system;
+		size_t available_sound_cnt;
+		size_t available_channel_cnt;
+
+		fmod_resource() : available_channel_cnt{ fmod_max_channels }, available_sound_cnt{ fmod_max_sounds }
+		{
+			FMOD::System_Create( &system );
+			FMOD::Memory_Initialize( malloc( 4 * 1024 * 1024 ), 4 * 1024 * 1024, 0, 0, 0 );
+			system->init( fmod_max_channels, FMOD_INIT_NORMAL, nullptr );
+		}
+
+		~fmod_resource()
+		{
+			system->release();
+		}
+
+		fmod_resource( const fmod_resource& other ) = delete;
+		fmod_resource& operator=( const fmod_resource& other ) = delete;
+	};
+
+	static fmod_resource fmod_rc;
+
 public:
 	enum class mode {
 		normal = FMOD_LOOP_OFF, loop = FMOD_LOOP_NORMAL
@@ -47,6 +75,12 @@ public:
 		fmod_channels.back()->setVolume( min_volume );
 		fmod_rc.system->playSound( fmod_sound, nullptr, false, &fmod_channels.back() );
 		--fmod_rc.available_channel_cnt;
+
+		std::cout << "volume: " << volume << '\n';
+		std::cout << "min_volume: " << min_volume << '\n';
+		std::cout << "gradient: " << gradient << '\n';
+		std::cout << "fmod_sound: " << fmod_sound << '\n';
+		std::cout << "fmod_channel: " << fmod_channels.back() << '\n';
 	}
 
 	void amplify( const float val )
@@ -113,25 +147,82 @@ public:
 	}
 
 	sound( const char* file_path, mode mod, const float volume = 1.0f, const float gradient = default_gradient )
-		: volume{ volume }, gradient{ gradient }
+		: volume{ volume }, gradient{ gradient }, min_volume{ volume / gradient }
 	{
-		assert( fmode_rc.available_sound_cnt > 0 );
+		assert( fmod_rc.available_sound_cnt > 0 );
 		fmod_rc.system->createSound( file_path, etoi( mod ) | FMOD_LOWMEM, nullptr, &fmod_sound );
 		sound_insts.push_back( this );
 		at = --sound_insts.end();
 		--fmod_rc.available_sound_cnt;
 	}
 
+	// copy는 권장하지 않는다. move samentics를 이용하라.
+	sound( const sound& other ) : volume{ other.volume }, gradient{ other.gradient }, min_volume{ other.volume / other.min_volume },
+		fmod_sound{ other.fmod_sound }
+	{
+		sound_insts.push_back( this );
+		at = --sound_insts.end();
+	}
+
+	// copy는 권장하지 않는다. move samentics를 이용하라.
+	sound& operator=( const sound& other )
+	{
+		if ( this != &other && fmod_sound != other.fmod_sound )
+		{
+			this->~sound();
+
+			volume = other.volume;
+			gradient = other.gradient;
+			min_volume = other.min_volume;
+			fmod_sound = other.fmod_sound;
+
+			sound_insts.push_back( this );
+			at = --sound_insts.end();
+		}
+
+		return *this;
+	}
+
+	sound( sound&& other ) noexcept : volume{ other.volume }, gradient{ other.gradient }, min_volume{ other.min_volume },
+		fmod_sound{ other.fmod_sound }, fmod_channels{ std::move( other.fmod_channels ) }
+	{
+		other.fmod_sound = nullptr;
+		sound_insts.erase( other.at );
+		sound_insts.push_back( this );
+		at = --sound_insts.end();
+	}
+
+	sound& operator=( sound&& other ) noexcept
+	{
+		if ( this != &other )
+		{
+			this->~sound();
+
+			volume = other.volume;			gradient = other.gradient;
+			min_volume = other.min_volume;	fmod_sound = other.fmod_sound;
+			fmod_channels = std::move( other.fmod_channels );
+
+			other.fmod_sound = nullptr;
+			sound_insts.erase( other.at );
+			sound_insts.push_back( this );
+			at = --sound_insts.end();
+		}
+
+		return *this;
+	}
+
 	~sound()
 	{
-		fmod_sound->release();
-		sound_insts.erase( at );
-		++fmod_rc.available_sound_cnt;
+		if ( fmod_sound )
+		{
+			fmod_sound->release();
+			sound_insts.erase( at );
+			++fmod_rc.available_sound_cnt;
+		}
 	}
 
 
 private:
-	static constexpr size_t max_subsounds = 5;
 	static constexpr float default_gradient = 0.5f;
 
 	float min_volume;
@@ -141,35 +232,10 @@ private:
 	std::vector< FMOD::Channel* > fmod_channels;
 	static std::list< sound* > sound_insts;
 	std::list< sound* >::const_iterator at;
-
-	struct fmod_resource
-	{
-		static constexpr size_t fmod_max_channels = 32;
-		static constexpr size_t fmod_max_sounds = 100;
-
-		FMOD::System* system;
-		size_t available_sound_cnt;
-		size_t available_channel_cnt;
-
-		fmod_resource() : available_channel_cnt{ fmod_max_channels }, available_sound_cnt{ fmod_max_sounds }
-		{
-			FMOD::Memory_Initialize( malloc( 4 * 1024 * 1024 ), 4 * 1024 * 1024, 0, 0, 0 );
-
-			FMOD::System_Create( &system );
-			system->init( fmod_max_channels, FMOD_INIT_NORMAL, nullptr );
-		}
-
-		~fmod_resource()
-		{
-			system->release();
-		}
-
-		fmod_resource( const fmod_resource& other ) = delete;
-		fmod_resource& operator=( const fmod_resource& other ) = delete;
-	};
-
-	static fmod_resource fmod_rc;
 };
+
+sound::fmod_resource sound::fmod_rc;
+std::list< sound* > sound::sound_insts;
 
 // 사운드를 태그별로 관리하는 클래스
 class soundcomponent
