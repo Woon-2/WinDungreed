@@ -111,7 +111,7 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 		EndPaint( hWnd, &ps );
 		break;
 
-	case WM_KEYDOWN:
+	case WM_KEYDOWN: case WM_LBUTTONDOWN: case WM_RBUTTONDOWN: case WM_MOUSEMOVE: case WM_LBUTTONUP: case WM_RBUTTONUP:
 		dungreed->process_input( uMsg, wParam, lParam );
 		break;
 

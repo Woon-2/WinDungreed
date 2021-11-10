@@ -3,20 +3,24 @@
 #define _xyutility
 
 #include <windows.h>
+#include "myvector.h"
 
-const auto xytrans( const RECT& destrt, const RECT& srcrt, const POINT& pt )
+vec2 convertpt( HWND hWnd, LONG x, LONG y )
 {
-	auto xdiff = pt.x - srcrt.left;
-	auto ydiff = pt.y - srcrt.top;
+	// ( x - x_min ) * 2 / screen_length - 1.0f -> normalized x
+	// ( y - y_min ) * -2 / screen_length + 1.0f -> normalized y
+	RECT client;
+	GetClientRect( hWnd, &client );
+	return vec2{ ( x - client.left ) * 2.f / ( client.right - client.left ) - 1.0f,
+		( y - client.top ) * -2.f / ( client.bottom - client.top ) + 1.0f };
+}
 
-	auto widthratio = ( static_cast< double >( destrt.right ) - destrt.left ) / ( static_cast< double >( srcrt.right ) - srcrt.left );
-	auto heightratio = ( static_cast< double >( destrt.bottom ) - destrt.top ) / ( static_cast< double >( srcrt.bottom ) - srcrt.top );
-
-	// windef.h의 RECT는 LONG을 통해 생성되고, double로부터 형변환이 불가능하다
-	xdiff = static_cast< LONG >( xdiff * widthratio );
-	ydiff = static_cast< LONG >( ydiff * heightratio );
-
-	return POINT{ destrt.left + xdiff, destrt.top + ydiff };
+POINT convertpt( HWND hWnd, vec2 pt )
+{
+	RECT client;
+	GetClientRect( hWnd, &client );
+	return POINT{ static_cast< LONG >( ( pt[ 0 ] + 1.0f ) * ( client.right - client.left ) / 2.f + client.left ),
+		static_cast< LONG >( ( pt[ 1 ] - 1.0f ) * ( client.bottom - client.top ) / -2.f + client.top ) };
 }
 
 class rect_builder

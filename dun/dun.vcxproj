@@ -20,13 +20,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="database.h" />
+    <ClInclude Include="event_table.h" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="image.h" />
+    <ClInclude Include="myvector.h" />
     <ClInclude Include="pool.h" />
     <ClInclude Include="randomvalue.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="singleton.h" />
     <ClInclude Include="sound.h" />
     <ClInclude Include="timer.h" />
+    <ClInclude Include="title_scene.h" />
     <ClInclude Include="TMP.h" />
     <ClInclude Include="xyutility.h" />
     <ClInclude Include="saveload.h" />
@@ -129,6 +133,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,6 +167,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

@@ -6,8 +6,6 @@
 #include <vector>
 #include <list>
 #include "TMP.h"
-#include <cassert>
-#include <cmath>
 
 class sound
 {
@@ -49,15 +47,11 @@ public:
 		// 한 사운드가 둘 이상의 채널에서 재생될 경우 ( 동시 재생 )
 		// 나중에 재생된 사운드의 볼륨을 줄인다.
 		min_volume *= gradient;
-		fmod_channels.back()->setVolume( min_volume );
 		system->playSound( fmod_sound, nullptr, false, &fmod_channels.back() );
+		fmod_channels.back()->setVolume( min_volume );
+		fmod_channels.back()->setPaused( is_paused );
+		fmod_channels.back()->setMute( is_muted );
 		--available_channel_cnt;
-
-		std::cout << "volume: " << volume << '\n';
-		std::cout << "min_volume: " << min_volume << '\n';
-		std::cout << "gradient: " << gradient << '\n';
-		std::cout << "fmod_sound: " << fmod_sound << '\n';
-		std::cout << "fmod_channel: " << fmod_channels.back() << '\n';
 	}
 
 	void amplify( const float val )
@@ -74,6 +68,7 @@ public:
 
 	void mute()
 	{
+		is_muted = true;
 		for ( auto ch : fmod_channels )
 		{
 			ch->setMute( true );
@@ -82,6 +77,7 @@ public:
 
 	void listen()
 	{
+		is_muted = false;
 		for ( auto ch : fmod_channels )
 		{
 			ch->setMute( false );
@@ -90,6 +86,7 @@ public:
 
 	void pause()
 	{
+		is_paused = true;
 		for ( auto ch : fmod_channels )
 		{
 			ch->setPaused( true );
@@ -98,6 +95,7 @@ public:
 
 	void resume()
 	{
+		is_paused = false;
 		for ( auto ch : fmod_channels )
 		{
 			ch->setPaused( false );
@@ -119,20 +117,22 @@ public:
 
 		for ( auto s : sound_insts )
 		{
-			// 나중에 재생된 채널이 가장 마지막에 종료된다.
-			// 뒤에서부터 조사하여 종료된 채널을 만나면, 그 앞의 채널들은 전부 종료된 채널이다.
-			for ( auto iter = s->fmod_channels.rbegin(); iter != s->fmod_channels.rend(); ++iter )
+			// 먼저 재생된 채널이 먼저 종료!
+			while ( s->fmod_channels.size() )
 			{
 				bool is_playing = false;
-				bool is_paused = false;
-				( *iter )->isPlaying( &is_playing );
-				( *iter )->getPaused( &is_paused );
+				bool is_paused = s->is_paused;
+				
+				s->fmod_channels.front()->isPlaying( &is_playing );
 
 				if ( !is_playing && !is_paused )
-				{   
-					available_channel_cnt += std::distance( iter, s->fmod_channels.rend() );
-					s->fmod_channels.erase( s->fmod_channels.begin(), iter.base() );
-					s->min_volume = static_cast< float >( pow( s->volume, s->fmod_channels.size() - 1 ) );
+				{
+					++available_channel_cnt;
+					s->fmod_channels.pop_front();
+					s->min_volume /= s->gradient;
+				}
+				else
+				{
 					break;
 				}
 			}
@@ -196,7 +196,7 @@ public:
 	{
 		for ( auto s : tagged_sounds[ etoi( tag ) ] )
 		{
-			s->mute();
+			s->listen();
 		}
 	}
 
@@ -252,22 +252,25 @@ private:
 	static FMOD::System* system;
 	static std::array< std::vector< std::shared_ptr< sound > >, etoi( sound_tag::SIZE ) > tagged_sounds;
 
+	bool is_paused;
+	bool is_muted;
 	float min_volume;
 	float volume;
 	float gradient;
 	FMOD::Sound* fmod_sound;
-	std::vector< FMOD::Channel* > fmod_channels;
+	std::deque< FMOD::Channel* > fmod_channels;
 	std::list< sound* >::const_iterator at;
 
 	sound( const char* file_path, mode mod, const float volume = 1.0f, const float gradient = default_gradient )
-		: volume{ volume }, gradient{ gradient }, min_volume{ volume / gradient }, fmod_sound{ nullptr }
+		: volume{ volume }, gradient{ gradient }, min_volume{ volume / gradient }, fmod_sound{ nullptr },
+		is_paused { false }, is_muted { false }
 	{
 		if ( !available_sound_cnt )
 		{
 			std::cerr << "available_sound_cnt was 0.\n";
 			return;
 		}
-
+		std::cout << file_path << '\n';
 		system->createSound( file_path, etoi( mod ) | FMOD_LOWMEM, nullptr, &fmod_sound );
 		sound_insts.push_back( this );
 		at = --sound_insts.end();
