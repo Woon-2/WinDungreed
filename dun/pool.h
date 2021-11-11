@@ -180,7 +180,7 @@ private:
 	// for safe memory writing, each memory size must be over sizeof( void* ).
 	static constexpr const size_t safe_mem() noexcept
 	{
-		return std::max( sizeof( Ty ), sizeof( void* ) );
+		return max( sizeof( Ty ), sizeof( void* ) );
 	}
 
 	template < typename Ptr_t, typename ... Args >

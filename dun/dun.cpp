@@ -18,28 +18,6 @@ std::unique_ptr< game > dungreed;
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = L"Window Class Name";
 LPCTSTR lpszWindowName = L"windows program";
-RECT client;
-
-#define BackBuffer _BackBuffer::getinst()
-class _BackBuffer : public Singleton< _BackBuffer >
-{
-public:
-	void Draw(HDC h_dc)
-	{
-		buf_dc = CreateCompatibleDC(h_dc);
-		HBITMAP bit_buf{ CreateCompatibleBitmap(h_dc, client.right, client.bottom) };
-		SelectObject(buf_dc, bit_buf);
-		BitBlt(h_dc, 0, 0, client.right, client.bottom, buf_dc, 0, 0, SRCCOPY);
-		DeleteObject(bit_buf);
-		DeleteDC(buf_dc);
-	}
-	operator HDC() { return buf_dc; }
-
-	_BackBuffer( Singleton::no_constructor_call ) : buf_dc{ nullptr } {}
-
-private:
-	HDC buf_dc;
-};
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam);
 
@@ -102,12 +80,11 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 	switch ( uMsg )
 	{
 	case WM_CREATE:
-		GetClientRect( hWnd, &client );
 		break;
 
 	case WM_PAINT:
 		hDC = BeginPaint( hWnd, &ps );
-		BackBuffer.Draw( hDC );
+		BackBuffer.Draw( hWnd, hDC );
 		EndPaint( hWnd, &ps );
 		break;
 

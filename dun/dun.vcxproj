@@ -19,10 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="animation.h" />
     <ClInclude Include="database.h" />
     <ClInclude Include="event_table.h" />
     <ClInclude Include="game.h" />
     <ClInclude Include="image.h" />
+    <ClInclude Include="doublebuffer.h" />
+    <ClInclude Include="logo_scene.h" />
     <ClInclude Include="myvector.h" />
     <ClInclude Include="pool.h" />
     <ClInclude Include="randomvalue.h" />
@@ -32,6 +35,7 @@
     <ClInclude Include="timer.h" />
     <ClInclude Include="title_scene.h" />
     <ClInclude Include="TMP.h" />
+    <ClInclude Include="videocomponent.h" />
     <ClInclude Include="xyutility.h" />
     <ClInclude Include="saveload.h" />
   </ItemGroup>

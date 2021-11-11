@@ -3,7 +3,7 @@
 
 #include <windows.h>
 #include "timer.h"
-#include "title_scene.h"
+#include "logo_scene.h"
 #include "sound.h"
 #include "event_table.h"
 
@@ -69,7 +69,7 @@ public:
 	}
 
 	game( HWND hWnd, const UINT timer_id, const float fps, const float clock = 10.f ) : hWnd{ hWnd },
-		game_timer{ hWnd, timer_id, fps, clock }, game_scene{ new title_scene{ game_timer, event_queue } } {}
+		game_timer{ hWnd, timer_id, fps, clock }, game_scene{ new logo_scene{ game_timer, event_queue } } {}
 
 	game( const game& ) = default;
 	game& operator=( const game& ) = default;

@@ -4,6 +4,7 @@
 #include "game.h"
 #include "event_table.h"
 #include "TMP.h"
+#include "image.h"
 
 class scene
 {

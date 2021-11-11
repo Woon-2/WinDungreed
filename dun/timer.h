@@ -1,10 +1,6 @@
 #ifndef _timer
 #define _timer
 
-#ifdef max
-#undef max		// c 매크로 max를 제거하기 위함
-#endif
-
 #include <chrono>
 #include <iostream>
 #include "TMP.h"
@@ -14,6 +10,7 @@
 #include <deque>
 #include <functional>
 #include <utility>
+
 
 class timer
 {
@@ -61,7 +58,7 @@ public:
 		update_curfps( interval );
 
 		ms_time += interval;
-		lag = std::max( lag + interval - ms_time, 0.f );
+		lag = max( lag + interval - ms_time, 0.f );
 
 		last_tp = cur_tp;
 	}
