@@ -96,4 +96,5 @@ constexpr const auto etoi( Enum_t e )
     return static_cast< int >( e );
 }
 
+
 #endif

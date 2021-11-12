@@ -3,17 +3,19 @@
 
 #include "scene.h"
 #include <iostream>
-#include "videocomponent.h"
 
 class logo_scene : public scene
 {
 public:
-	logo_scene( const SceneResources& scene_resources ) : scene( scene_resources ), dir{ 1 }, revert{ false }
+	logo_scene( const SceneResources& scene_resources ) : scene( scene_resources )
 	{
-		game_timer.alarm( 3000.f, [this]() { event_queue.push( Event::LOGO_END ); } );
 		video_component.push( Image::make( L"images/kpulogo.PNG" ) );
 		video_component.enable_alpha();
 		video_component.set_alpha( 0x00 );
+
+		game_timer.alarm( 3000.f, [this]() { event_queue.push( Event::LOGO_END ); } );
+		game_timer.alarm( 2400.f, [this]() { fadeout( 400.f ); } );
+		fadein( 400.f );
 	}
 
 	~logo_scene() override
@@ -23,25 +25,7 @@ public:
 
 	void update() override
 	{
-		video_component.add_alpha( game_timer.get_frame_time() / 2 * dir );
 
-		if ( !revert )
-		{
-			if ( video_component.get_alpha() > 255.f )
-			{
-				dir = 0;
-				video_component.set_alpha( 255.f );
-				game_timer.alarm( 2000, [this]() { revert = true; dir = -1; } );
-			}
-		}
-		else
-		{
-			if ( video_component.get_alpha() < 1.f )
-			{
-				video_component.set_alpha( 0.f );
-				dir = 0;
-			}
-		}
 	}
 
 	void render() override
@@ -53,9 +37,6 @@ public:
 	}
 
 private:
-	VideoComponent video_component;
-	int dir;
-	bool revert;
 };
 
 #endif

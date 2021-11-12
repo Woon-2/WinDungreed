@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AABB.h" />
     <ClInclude Include="animation.h" />
     <ClInclude Include="database.h" />
     <ClInclude Include="event_table.h" />

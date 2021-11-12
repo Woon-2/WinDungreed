@@ -19,10 +19,10 @@ private:
 	{
 		const bool operator>( const delayed& other )
 		{
-			return ms_delay > other.ms_delay;
+			return ms_time_exact > other.ms_time_exact;
 		}
 
-		float ms_delay;
+		float ms_time_exact;
 		std::function< void() > to_do;
 	};
 
@@ -30,9 +30,10 @@ public:
 	float clock;
 	const UINT timer_id;
 
-	void alarm( float ms_delay, std::function< void() >&& to_do )
+	template < typename Func >
+	void alarm( float ms_delay, Func to_do )
 	{
-		alarms.push( delayed{ ms_delay, to_do } );
+		alarms.push( delayed{ ms_delay + ms_time, to_do } );
 	}
 
 	void setFPS( const float fps )
@@ -48,14 +49,14 @@ public:
 	{
 		using namespace std::chrono;
 		static system_clock::time_point last_tp = system_clock::now();
-		auto cur_tp = system_clock::now();
-
-		frame_time = duration_cast< nanoseconds >( cur_tp - last_tp ).count()
-			/ static_cast< float >( nanoseconds::period::den / milliseconds::period::den );
 
 		prevent_overflow();
 		process_alarm();
 		update_curfps( frame_time );
+
+		auto cur_tp = system_clock::now();
+		frame_time = duration_cast< nanoseconds >( cur_tp - last_tp ).count()
+			/ static_cast<float>( nanoseconds::period::den / milliseconds::period::den );
 
 		ms_time += frame_time;
 		lag = max( lag + frame_time - ms_time, 0.f );
@@ -133,7 +134,7 @@ private:
 		while ( !alarms.empty() )
 		{
 			auto a = alarms.top();
-			a.ms_delay -= val;
+			a.ms_time_exact -= val;
 
 			temp.push( std::move( a ) );
 			alarms.pop();
@@ -157,7 +158,7 @@ private:
 		{
 			return false;
 		}
-		return alarms.top().ms_delay < ms_time;
+		return alarms.top().ms_time_exact < ms_time;
 	}
 
 	void update_curfps( const float frame_time )

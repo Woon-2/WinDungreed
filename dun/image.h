@@ -92,7 +92,6 @@ public:
 			SetWorldTransform( temp.buf_dc, &R );
 
 			::BitBlt( temp.buf_dc, -sw / 2.f, -sh / 2.f, sw, sh, source.buf_dc, 0, 0, SRCCOPY );
-
 			SelectObject( temp.buf_dc, temp.old_bit );
 			auto old_bit = static_cast< HBITMAP >( SelectObject( source.buf_dc, temp.buf_bit ) );
 			DeleteObject( old_bit );
