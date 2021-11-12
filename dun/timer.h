@@ -50,15 +50,15 @@ public:
 		static system_clock::time_point last_tp = system_clock::now();
 		auto cur_tp = system_clock::now();
 
-		auto interval = duration_cast< nanoseconds >( cur_tp - last_tp ).count()
+		frame_time = duration_cast< nanoseconds >( cur_tp - last_tp ).count()
 			/ static_cast< float >( nanoseconds::period::den / milliseconds::period::den );
 
 		prevent_overflow();
 		process_alarm();
-		update_curfps( interval );
+		update_curfps( frame_time );
 
-		ms_time += interval;
-		lag = max( lag + interval - ms_time, 0.f );
+		ms_time += frame_time;
+		lag = max( lag + frame_time - ms_time, 0.f );
 
 		last_tp = cur_tp;
 	}
@@ -76,6 +76,11 @@ public:
 	const float getcurFPS() const
 	{
 		return curfps;
+	}
+
+	const float get_frame_time() const
+	{
+		return frame_time;
 	}
 
 	const float get_ms_per_frame() const
@@ -102,6 +107,7 @@ public:
 	timer& operator=( const timer& ) = default;
 
 private:
+	float frame_time;
 	float lag;
 	float ms_per_frame;
 	float curfps;
@@ -154,9 +160,9 @@ private:
 		return alarms.top().ms_delay < ms_time;
 	}
 
-	void update_curfps( const float interval )
+	void update_curfps( const float frame_time )
 	{
-		curfps = 1000 / interval;
+		curfps = 1000 / frame_time;
 	}
 };
 

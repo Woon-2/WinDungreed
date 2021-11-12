@@ -23,6 +23,7 @@ enum class Event
 	MOUSE_LUP,
 	MOUSE_RDOWN,
 	MOUSE_RUP,
+	LOGO_END
 };
 
 #endif

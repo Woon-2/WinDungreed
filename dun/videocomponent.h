@@ -11,7 +11,7 @@ public:
 	void push( image_ptr image )
 	{
 		images.push_back( image );
-		clips.emplace_back( 0, 0, image->width(), image->height(), 0, 0.f );
+		clips.emplace_back( 0, 0, image->width(), image->height() );
 		animations.push_back( nullptr );
 	}
 
@@ -106,6 +106,26 @@ public:
 		images[ selected ]->radian = val;
 	}
 
+	const float get_radian() const
+	{
+		return images[ selected ]->radian;
+	}
+
+	void add_alpha( const float val )
+	{
+		images[ selected ]->alpha += val;
+	}
+
+	void set_alpha( const float val )
+	{
+		images[ selected ]->alpha = val;
+	}
+
+	const float get_alpha() const
+	{
+		return images[ selected ]->alpha;
+	}
+
 	void update_animation()
 	{
 		if ( animations[ selected ] )
@@ -123,6 +143,8 @@ public:
 			clips[ selected ] = animations[ selected ]->get_clip_area();
 		}
 	}
+
+	VideoComponent() : selected{ 0u } {}
 
 private:
 	std::vector< image_ptr > images;

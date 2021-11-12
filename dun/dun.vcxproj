@@ -32,6 +32,7 @@
     <ClInclude Include="scene.h" />
     <ClInclude Include="singleton.h" />
     <ClInclude Include="sound.h" />
+    <ClInclude Include="state.h" />
     <ClInclude Include="timer.h" />
     <ClInclude Include="title_scene.h" />
     <ClInclude Include="TMP.h" />

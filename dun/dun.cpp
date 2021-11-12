@@ -84,7 +84,6 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 
 	case WM_PAINT:
 		hDC = BeginPaint( hWnd, &ps );
-		BackBuffer.Draw( hWnd, hDC );
 		EndPaint( hWnd, &ps );
 		break;
 

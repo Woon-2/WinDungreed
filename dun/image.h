@@ -15,6 +15,9 @@ struct ClipArea
 	int y;
 	int w;
 	int h;
+
+	ClipArea() = default;
+	ClipArea( int x, int y, int w, int h ) : x{ x }, y{ y }, w{ w }, h{ h } {}
 };
 
 class Image : private CImage
@@ -22,7 +25,7 @@ class Image : private CImage
 public:
 	int flag;
 	float radian;
-	unsigned char alpha;
+	float alpha;
 
 	enum class Flag { v = 0x01, h = 0x02, r = 0x04, a = 0x08 };
 
@@ -43,17 +46,17 @@ public:
 
 	void draw( HDC dc, int dx, int dy, int dw, int dh, int sx, int sy, int sw, int sh )
 	{
-		doublebuffer source{ dc, sw, sh };
+		GraphicBuffer source{ dc, sw, sh };
 
 		Draw( source.buf_dc, 0, 0, sw, sh, sx, sy, sw, sh );
 
-		if ( flag & etoi(Flag::v) )
+		if ( flag & etoi( Flag::v ) )
 		{
 			dy += dh;
 			dh *= -1;
 		}
 
-		if ( flag & etoi(Flag::h) )
+		if ( flag & etoi( Flag::h ) )
 		{
 			dx += dw;
 			dw *= -1;
@@ -61,13 +64,13 @@ public:
 
 		if ( flag & etoi( Flag::a ) )
 		{
-			doublebuffer temp{ dc, sw, sh };
+			GraphicBuffer temp{ dc, sw, sh };
 
 			BLENDFUNCTION bf;
 			bf.AlphaFormat = 0;
 			bf.BlendFlags = 0;
 			bf.BlendOp = AC_SRC_OVER;
-			bf.SourceConstantAlpha = alpha;
+			bf.SourceConstantAlpha = static_cast< unsigned char >( alpha );
 
 			::AlphaBlend( temp.buf_dc, 0, 0, sw, sh, source.buf_dc, 0, 0, sw, sh, bf );
 			::BitBlt( source.buf_dc, 0, 0, sw, sh, temp.buf_dc, 0, 0, SRCCOPY );
@@ -75,21 +78,27 @@ public:
 
 		if ( flag & etoi( Flag::r ) )
 		{
-			doublebuffer temp{ dc, sw, sh };
-			SetGraphicsMode( temp.buf_dc, GM_ADVANCED );
+			GraphicBuffer temp{ source.buf_dc, sw, sh };
 
 			XFORM R;
-			R.eM11 = std::cos( radian );	R.eM12 = std::sin( radian );	R.eDx = sw / 2.f;
-			R.eM21 = -std::sin( radian );	R.eM22 = std::cos( radian );	R.eDy = sh / 2.f;
+			auto cosine = std::cos( radian );
+			auto sine = std::sin( radian );
 
+			R.eM11 = cosine;	R.eM12 = sine;
+			R.eM21 = -sine;		R.eM22 = cosine;
+			R.eDx = sw / 2.f;	R.eDy = sh / 2.f;
+
+			SetGraphicsMode( temp.buf_dc, GM_ADVANCED );
 			SetWorldTransform( temp.buf_dc, &R );
-			::BitBlt( temp.buf_dc, -sw / 2, -sh / 2, sw, sh, source.buf_dc, 0, 0, SRCCOPY );
 
-			SetTransparentColor( RGB( 0, 0, 0 ) );
-			::BitBlt( source.buf_dc, 0, 0, sw, sh, temp.buf_dc, -sw / 2, -sh / 2, SRCCOPY );
+			::BitBlt( temp.buf_dc, -sw / 2.f, -sh / 2.f, sw, sh, source.buf_dc, 0, 0, SRCCOPY );
+
+			SelectObject( temp.buf_dc, temp.old_bit );
+			auto old_bit = static_cast< HBITMAP >( SelectObject( source.buf_dc, temp.buf_bit ) );
+			DeleteObject( old_bit );
 		}
 
-		::TransparentBlt( dc, dx, dy, dw, dh, source.buf_dc, 0, 0, sw, sh, SRCCOPY );
+		::StretchBlt( dc, dx, dy, dw, dh, source.buf_dc, 0, 0, sw, sh, SRCCOPY );
 	}
 
 	static auto make( const TCHAR* file_path )
@@ -99,6 +108,12 @@ public:
 
 	Image( const Image& ) = delete;
 	Image& operator=( const Image& ) = delete;
+
+	~Image()
+	{
+		Destroy();
+		CImage::~CImage();
+	}
 
 private:
 	Image() : flag{ 0 }, radian{ 0.f }, alpha{ 0xff } {}

@@ -5,20 +5,16 @@
 #include <windows.h>
 #include "myvector.h"
 
-vec2 convertpt( HWND hWnd, LONG x, LONG y )
+vec2 convertpt( const RECT& client, LONG x, LONG y )
 {
 	// ( x - x_min ) * 2 / screen_length - 1.0f -> normalized x
 	// ( y - y_min ) * -2 / screen_length + 1.0f -> normalized y
-	RECT client;
-	GetClientRect( hWnd, &client );
 	return vec2{ ( x - client.left ) * 2.f / ( client.right - client.left ) - 1.0f,
 		( y - client.top ) * -2.f / ( client.bottom - client.top ) + 1.0f };
 }
 
-POINT convertpt( HWND hWnd, vec2 pt )
+POINT convertpt( const RECT& client, vec2 pt )
 {
-	RECT client;
-	GetClientRect( hWnd, &client );
 	return POINT{ static_cast< LONG >( ( pt[ 0 ] + 1.0f ) * ( client.right - client.left ) / 2.f + client.left ),
 		static_cast< LONG >( ( pt[ 1 ] - 1.0f ) * ( client.bottom - client.top ) / -2.f + client.top ) };
 }

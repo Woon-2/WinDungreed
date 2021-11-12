@@ -9,26 +9,28 @@
 class scene
 {
 public:
-	scene( timer& t, std::queue< Event >& eq ) : game_timer{ t }, event_queue{ eq } {}
+	struct SceneResources
+	{
+		timer& game_timer;
+		std::queue< Event >& event_queue;
+		RECT& client;
+		HWND hWnd;
+	};
+
+public:
+	virtual void update() = 0;
+	virtual void render() = 0;
+
+	scene( const SceneResources& scene_resources ) : game_timer{ scene_resources.game_timer }, event_queue{ scene_resources.event_queue },
+		client{ scene_resources.client }, hWnd{ scene_resources.hWnd } {}
+	
 	virtual ~scene() {}
-
-	virtual void update() = 0
-	{
-		while ( event_queue.size() )
-		{
-			std::cout << etoi( event_queue.front() ) << " processed\n";
-			event_queue.pop();
-		}
-	}
-
-	virtual void render() = 0
-	{
-
-	}
 
 protected:
 	timer& game_timer;
 	std::queue< Event >& event_queue;
+	RECT& client;
+	HWND hWnd;
 
 	void add_event( Event e )
 	{

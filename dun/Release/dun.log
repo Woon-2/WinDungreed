@@ -1,4 +1,6 @@
 ﻿  dun.cpp
+C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\image.h(94,42): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\image.h(94,31): warning C4244: '인수': 'float'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
 C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30037\include\memory(3416,56): warning C4244: '인수': '_Ty'에서 'const float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
           with
           [
@@ -6,8 +8,8 @@ C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.2
           ]
 C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\dun.cpp(55): message : 컴파일되는 함수 템플릿 인스턴스화 'std::unique_ptr<game,std::default_delete<game>> std::make_unique<game,HWND&,int,int,0>(HWND &,int &&,int &&)'에 대한 참조를 확인하세요.
   코드를 생성하고 있습니다.
-  8 of 645 functions ( 1.2%) were compiled, the rest were copied from previous compilation.
-    5 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+  2 of 966 functions ( 0.2%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    1 functions had inline decision re-evaluated but remain unchanged
   코드를 생성했습니다.
   dun.vcxproj -> C:\Users\아트라이프\Desktop\2학년 여름방학\dungreed\WinDungreed\dun\Release\dun.exe

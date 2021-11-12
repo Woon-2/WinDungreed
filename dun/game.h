@@ -4,8 +4,10 @@
 #include <windows.h>
 #include "timer.h"
 #include "logo_scene.h"
+#include "title_scene.h"
 #include "sound.h"
 #include "event_table.h"
+#include "xyutility.h"
 
 struct input_state
 {
@@ -35,14 +37,14 @@ public:
 
 		case WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_RBUTTONDOWN: case WM_RBUTTONUP:
 		{
-			auto pt = convertpt( hWnd, LOWORD( l_param ), HIWORD( l_param ) );
+			auto pt = convertpt( client, LOWORD( l_param ), HIWORD( l_param ) );
 			mouse( msg, pt[ 0 ], pt[ 1 ] );
 			break;
 		}
 
 		case WM_MOUSEMOVE:
 		{
-			auto pt = convertpt( hWnd, LOWORD( l_param ), HIWORD( l_param ) );
+			auto pt = convertpt( client, LOWORD( l_param ), HIWORD( l_param ) );
 			motion( msg, pt[ 0 ], pt[ 1 ] );
 			break;
 		}
@@ -69,23 +71,27 @@ public:
 	}
 
 	game( HWND hWnd, const UINT timer_id, const float fps, const float clock = 10.f ) : hWnd{ hWnd },
-		game_timer{ hWnd, timer_id, fps, clock }, game_scene{ new logo_scene{ game_timer, event_queue } } {}
+		game_timer{ hWnd, timer_id, fps, clock },
+		game_scene{ new logo_scene{ scene::SceneResources{ game_timer, event_queue, client, hWnd } } }
+	{
+		GetClientRect( hWnd, &client );
+	}
 
 	game( const game& ) = default;
 	game& operator=( const game& ) = default;
 
 private:
 	HWND hWnd;
+	HDC dc;
+	RECT client;
 	timer game_timer;
 	std::unique_ptr< scene > game_scene;
 	std::queue< Event > event_queue;
 
 	void update()
 	{
-		// 이벤트 중에는 씬을 전환하는 이벤트도 있음.
-		// if ( event_queue.front() == ) 로 걸러내기.
-
 		game_timer.update();
+		handle_scene_change();
 		sound::update();
 		game_scene->update();
 	}
@@ -93,6 +99,23 @@ private:
 	void render()
 	{
 		game_scene->render();
+	}
+
+	void handle_scene_change()
+	{
+		if ( event_queue.size() )
+		{
+			switch ( event_queue.front() )
+			{
+			default:
+				break;
+
+			case Event::LOGO_END:
+				game_scene.reset( new title_scene{ scene::SceneResources{ game_timer, event_queue, client, hWnd } } );
+				event_queue.pop();
+				break;
+			}
+		}
 	}
 
 	void keyboard( WPARAM key )
